@@ -1,20 +1,26 @@
 import express from 'express';
 import { authenticateUser, getAllUsers, getUser } from '../controllers/users.controller.js';
+import { authenticateToken } from '../middlewares/token.js';
 
 const router = express.Router();
 
 // GET users listing
-router.get('/', async function(req, res, next) {
+router.get('/', authenticateToken, async function(req, res, next) {
     try {
-        res.json(await getAllUsers(req.query.page));
+        const users = await getAllUsers(req.query.page);
+        if (users.length === 0) {
+            return res.status(404).json({ error: 'Users not found' });
+        }
+        return res.json(users);
     } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users', details: err.message });
         console.error(`Error while getting users `, err.message);
         next(err);
     }
 });
 
 // GET single user
-router.get('/:id', async function(req, res, next) {
+router.get('/:id', authenticateToken, async function(req, res, next) {
     try {
         res.json(await getUser(req.params.id));
     } catch (err) {
