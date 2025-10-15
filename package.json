@@ -1,0 +1,24 @@
+{
+  "name": "messaging-api",
+  "version": "0.1.0",
+  "private": true,
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon  --experimental-modules --es-module-specifier-resolution=node"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "debug": "^4.4.3",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "morgan": "^1.10.1",
+    "pg": "^8.16.3",
+    "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.3"
+  }
+}
