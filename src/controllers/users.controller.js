@@ -2,12 +2,33 @@ import { query, emptyOrRows, getOffset } from '../db/query.js';
 import { dbConfig } from '../config/db.js';
 import { STATUS } from '../config/constants.js';
 import { comparePassword } from '../utils/encrypt.js';
+import { formatDateToMySQL } from "../utils/datetime.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_EXPIRATION_TIME = process.env.JWT_EXPIRATION_TIME;
 
 export const authenticateUser = async (userId, password) => {
     const sql = `select id, username, password_hash from users where username = '${userId}'`;
     const userData = await query(sql);
+    const { password_hash, ...user } = userData[0];
+    const usernamePasswordMatch = comparePassword(password, password_hash);
+    if (usernamePasswordMatch) {
+        const timestamp = formatDateToMySQL(new Date());
+        await query("UPDATE users SET last_seen = ? where id = ?", [timestamp, user.id]);
+        const token = jwt.sign(
+            { id: user.id, username: user.username },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRATION_TIME }
+        );
 
-    return comparePassword(password, userData[0].password_hash);
+        return { user, token };
+    }
+
+    return {};
 }
 
 export const getAllUsers = async (page = 1) => {
