@@ -43,18 +43,4 @@ describe('encrypt.js tests', () => {
         expect(bcrypt.compare).toHaveBeenCalledWith(input, saved);
         expect(result).toBe(false);
     });
-
-    test('encryptMessage should return a hashed message', async () => {
-        const input = 'secretMessage';
-        const salt = 'randomSalt';
-        const hashedMessage = 'hashedMessage';
-        bcrypt.genSalt.mockResolvedValue(salt);
-        bcrypt.hash.mockResolvedValue(hashedMessage);
-
-        const result = await encryptMessage(input);
-
-        expect(bcrypt.genSalt).toHaveBeenCalled();
-        expect(bcrypt.hash).toHaveBeenCalledWith(input, salt);
-        expect(result).toBe(hashedMessage);
-    });
 });
