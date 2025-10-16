@@ -1,8 +1,10 @@
 import express from 'express';
 import { authenticateUser, getAllUsers, getUser } from '../controllers/users.controller.js';
 import { authenticateToken } from '../middlewares/token.js';
+import { UserService } from "../services/user.service.js";
 
 const router = express.Router();
+const userService = new UserService();
 
 // GET users listing
 router.get('/', authenticateToken, async function(req, res, next) {
@@ -39,5 +41,14 @@ router.post('/auth', async function(req, res, next) {
     }
 });
 
+// POST register new user
+router.post('/register', authenticateToken, async function(req, res, next) {
+    try {
+        res.json(await userService.createUser(req.body));
+    } catch (err) {
+        console.error(`Error while creating user `, err.message);
+        next(err);
+    }
+});
 
 export default router;
