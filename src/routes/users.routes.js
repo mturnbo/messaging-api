@@ -7,7 +7,7 @@ const router = express.Router();
 const userService = new UserService();
 
 // GET users listing
-router.get('/', authenticateToken, async function(req, res, next) {
+router.get('/', async function(req, res, next) {
     try {
         const users = await getAllUsers(req.query.page);
         if (users.length === 0) {
@@ -22,7 +22,7 @@ router.get('/', authenticateToken, async function(req, res, next) {
 });
 
 // GET single user
-router.get('/:id', authenticateToken, async function(req, res, next) {
+router.get('/:id', async function(req, res, next) {
     try {
         res.json(await getUser(req.params.id));
     } catch (err) {
@@ -42,7 +42,7 @@ router.post('/auth', async function(req, res, next) {
 });
 
 // POST register new user
-router.post('/register', authenticateToken, async function(req, res, next) {
+router.post('/register', async function(req, res, next) {
     try {
         res.json(await userService.createUser(req.body));
     } catch (err) {
