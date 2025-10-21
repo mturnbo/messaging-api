@@ -1,0 +1,32 @@
+###
+POST http://localhost:3000/users/auth
+Content-Type: application/json
+
+{
+  "username": "testuser1",
+  "password": "password123"
+}
+
+> {% client.global.set("auth_token", response.body.token); %}
+
+###
+GET http://localhost:3000/users/10001
+Authorization: Bearer {{auth_token}}
+
+###
+GET http://localhost:3000/messages/2
+Authorization: Bearer {{auth_token}}
+
+
+###
+POST http://localhost:3000/messages/post
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "senderId": 10040,
+  "recipientId": 10031,
+  "subject": "Lorem ipsum",
+  "body": "Lorem ipsum dolor sit amet",
+  "senderAddress": "123.123.123.123"
+}

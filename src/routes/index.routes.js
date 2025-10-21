@@ -24,9 +24,4 @@ router.get('/db', function(req, res, next) {
         });
 });
 
-/* GET Index Page */
-router.get('/env', function(req, res, next) {
-    res.render('index', { title: 'User Messaging API' });
-});
-
 export default router;

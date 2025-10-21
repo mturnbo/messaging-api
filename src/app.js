@@ -5,6 +5,7 @@ import logger from 'morgan';
 
 import indexRouter from './routes/index.routes.js';
 import usersRouter from './routes/users.routes.js';
+import messagesRouter from './routes/messages.routes.js';
 
 import { notFound } from './middlewares/notFound.js';
 import { handleError } from './middlewares/handleError.js';
@@ -21,6 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/messages', messagesRouter);
 
 app.use(notFound);
 app.use(handleError);

@@ -6,6 +6,12 @@ export const query = async (sql, params) => {
     return results;
 }
 
+export const execute = async (sql, params) => {
+    const [results, ] = await pool.execute(sql, params);
+
+    return results;
+}
+
 export const getOffset = (currentPage = 1, listPerPage) => {
     return (currentPage - 1) * [listPerPage];
 }
