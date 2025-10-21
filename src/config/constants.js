@@ -6,4 +6,5 @@ export const STATUS = Object.freeze({
     SUCCESS: 'success',
     ERROR: 'error',
     UNAUTHORIZED: 'unauthorized',
+    NOTFOUND: 'not-found',
 });
