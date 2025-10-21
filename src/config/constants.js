@@ -5,4 +5,5 @@ export const STATUS = Object.freeze({
     UPDATED: 'updated',
     SUCCESS: 'success',
     ERROR: 'error',
+    UNAUTHORIZED: 'unauthorized',
 });

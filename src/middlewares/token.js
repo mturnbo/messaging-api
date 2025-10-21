@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
+import { STATUS } from "../config/constants.js";
 
 dotenv.config();
 
@@ -10,12 +11,18 @@ export const authenticateToken = (req, res, next) => {
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ error: 'Access token required' });
+        return res.status(401).json({
+            status: STATUS.UNAUTHORIZED,
+            error: 'Access token required'
+        });
     }
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
-            return res.status(403).json({ error: 'Invalid or expired token' });
+            return res.status(403).json({
+                status: STATUS.UNAUTHORIZED,
+                error: 'Invalid or expired token'
+            });
         }
         req.user = user;
         next();
