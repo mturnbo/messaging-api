@@ -1,7 +1,7 @@
 import express from 'express';
-import { getMessage } from '../controllers/messages.controller.js';
-import { MessageService } from '../services/message.service.js';
-import { authenticateToken } from '../middlewares/token.js';
+import { getMessage } from '#controllers/messages.controller.js';
+import { MessageService } from '#services/message.service.js';
+import { authenticateToken } from '#middlewares/token.js';
 
 const router = express.Router();
 const messageService = new MessageService();

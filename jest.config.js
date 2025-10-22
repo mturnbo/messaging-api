@@ -1,6 +1,5 @@
 export default {
     testEnvironment: 'node',
-    extensionsToTreatAsEsm: ['.js'],
     transform: {},
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
@@ -8,4 +7,6 @@ export default {
     coveragePathIgnorePatterns: [
         '/node_modules/'
     ],
+    testMatch: ['**/tests/**/*.test.js'],
+    injectGlobals: true,
 };

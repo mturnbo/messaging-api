@@ -1,12 +1,19 @@
-import {
+import { jest } from '@jest/globals';
+
+jest.unstable_mockModule('bcrypt', () => ({
+  default: {
+    genSalt: jest.fn(),
+    hash: jest.fn(),
+    compare: jest.fn(),
+  }
+}));
+
+const { default: bcrypt } = await import('bcrypt');
+const {
   generateHashedPassword,
   comparePassword,
   encryptMessage,
-} from "../../../src/utils/encrypt.js";
-import bcrypt from "bcrypt";
-import jest from 'jest';
-
-jest.mock("bcrypt");
+} = await import("#utils/encrypt.js");
 
 describe("encrypt utils", () => {
   afterEach(() => {

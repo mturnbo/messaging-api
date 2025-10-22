@@ -1,13 +1,26 @@
-import express from 'express';
-import request from 'supertest';
-import usersRouter from '../../../src/routes/users.routes.js';
-import { authenticateUser, getAllUsers, getUser } from '../../../src/controllers/users.controller.js';
-import { authenticateToken } from '../../../src/middlewares/token.js';
-import { UserService } from '../../../src/services/user.service.js';
+import { jest } from '@jest/globals';
 
-jest.mock('../../../src/controllers/users.controller.js');
-jest.mock('../../../src/middlewares/token.js');
-jest.mock('../../../src/services/user.service.js');
+const mockCreateUser = jest.fn();
+jest.unstable_mockModule('#controllers/users.controller.js', () => ({
+  authenticateUser: jest.fn(),
+  getAllUsers: jest.fn(),
+  getUser: jest.fn(),
+}));
+jest.unstable_mockModule('#middlewares/token.js', () => ({
+  authenticateToken: jest.fn(),
+}));
+jest.unstable_mockModule('#src/services/user.service.js', () => ({
+  UserService: jest.fn(() => ({
+    createUser: mockCreateUser,
+  })),
+}));
+
+const express = (await import('express')).default;
+const request = (await import('supertest')).default;
+const usersRouter = (await import('#routes/users.routes.js')).default;
+const { authenticateUser, getAllUsers, getUser } = await import('#controllers/users.controller.js');
+const { authenticateToken } = await import('#middlewares/token.js');
+const { UserService } = await import('#services/user.service.js');
 
 describe('users.routes.js tests', () => {
     let app;

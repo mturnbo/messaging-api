@@ -1,8 +1,8 @@
-import { query, emptyOrRows, getOffset } from '../db/query.js';
-import { dbConfig } from '../config/db.js';
-import { STATUS } from '../config/constants.js';
-import { comparePassword } from '../utils/encrypt.js';
-import { formatDateToMySQL } from "../utils/datetime.js";
+import { query, emptyOrRows, getOffset } from '#db/query.js';
+import { dbConfig } from '#config/db.js';
+import { STATUS } from '#config/constants.js';
+import { comparePassword } from '#utils/encrypt.js';
+import { formatDateToMySQL } from "#utils/datetime.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 
