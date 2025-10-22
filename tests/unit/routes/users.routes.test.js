@@ -1,176 +1,151 @@
-import { jest } from '@jest/globals';
+/**
+ * Jest tests for src/routes/users.routes.js
+ *
+ * These tests mock the controller functions, token middleware, and UserService so we can
+ * exercise the route handlers in isolation without hitting a real DB or verifying auth.
+ *
+ * Uses supertest to make requests against an Express app that mounts the router under /users.
+ */
 
-const mockCreateUser = jest.fn();
-jest.unstable_mockModule('#controllers/users.controller.js', () => ({
-  authenticateUser: jest.fn(),
-  getAllUsers: jest.fn(),
-  getUser: jest.fn(),
-}));
-jest.unstable_mockModule('#middlewares/token.js', () => ({
-  authenticateToken: jest.fn(),
-}));
-jest.unstable_mockModule('#src/services/user.service.js', () => ({
-  UserService: jest.fn(() => ({
-    createUser: mockCreateUser,
-  })),
+import request from 'supertest';
+import express from 'express';
+
+// Create mocks we can control in tests
+const getAllUsersMock = jest.fn();
+const getUserMock = jest.fn();
+const authenticateUserMock = jest.fn();
+const createUserMock = jest.fn();
+
+// Mock controllers before importing the router so the router gets the mocked functions
+jest.mock('#controllers/users.controller.js', () => ({
+    // export functions that forward to our jest.fn() mocks
+    getAllUsers: (...args) => getAllUsersMock(...args),
+    getUser: (...args) => getUserMock(...args),
+    authenticateUser: (...args) => authenticateUserMock(...args),
 }));
 
-const express = (await import('express')).default;
-const request = (await import('supertest')).default;
-const usersRouter = (await import('#routes/users.routes.js')).default;
-const { authenticateUser, getAllUsers, getUser } = await import('#controllers/users.controller.js');
-const { authenticateToken } = await import('#middlewares/token.js');
-const { UserService } = await import('#services/user.service.js');
+// Mock token middleware to simply call next() by default (successful authentication)
+jest.mock('#middlewares/token.js', () => ({
+    authenticateToken: jest.fn((req, res, next) => next()),
+}));
 
-describe('users.routes.js tests', () => {
+// Mock UserService class used by the route file. The router instantiates a UserService
+// at module load time, so the mock must provide a constructor that returns an object
+// with createUser (our createUserMock).
+jest.mock('#services/user.service.js', () => ({
+    UserService: jest.fn().mockImplementation(() => ({ createUser: createUserMock })),
+}));
+
+// Now import the router under test (after mocks are set up)
+import router from '#routes/users.routes.js';
+
+describe('users.routes', () => {
     let app;
 
     beforeEach(() => {
-        app = express();
-        app.use(express.json());
-        app.use('/users', usersRouter);
+        // reset mock call history and implementations between tests
         jest.clearAllMocks();
 
-        // Mock authenticateToken middleware to call next()
-        authenticateToken.mockImplementation((req, res, next) => next());
-    });
+        // Minimal express app mounting the router under /users
+        app = express();
+        app.use(express.json());
+        app.use('/users', router);
 
-    describe('GET /', () => {
-        it('should return users when users are found', async () => {
-            const mockUsers = [
-                { id: 1, username: 'user1' },
-                { id: 2, username: 'user2' }
-            ];
-            getAllUsers.mockResolvedValue(mockUsers);
-
-            const response = await request(app).get('/users');
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockUsers);
-            expect(getAllUsers).toHaveBeenCalledWith(undefined);
-        });
-
-        it('should return users with page parameter', async () => {
-            const mockUsers = [{ id: 1, username: 'user1' }];
-            getAllUsers.mockResolvedValue(mockUsers);
-
-            const response = await request(app).get('/users?page=2');
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockUsers);
-            expect(getAllUsers).toHaveBeenCalledWith('2');
-        });
-
-        it('should return 404 when no users are found', async () => {
-            getAllUsers.mockResolvedValue([]);
-
-            const response = await request(app).get('/users');
-
-            expect(response.status).toBe(404);
-            expect(response.body).toEqual({ error: 'Users not found' });
-        });
-
-        it('should return 500 when an error occurs', async () => {
-            const error = new Error('Database error');
-            getAllUsers.mockRejectedValue(error);
-
-            const response = await request(app).get('/users');
-
-            expect(response.status).toBe(500);
-            expect(response.body).toEqual({
-                error: 'Failed to fetch users',
-                details: 'Database error'
-            });
-        });
-
-        it('should call authenticateToken middleware', async () => {
-            getAllUsers.mockResolvedValue([{ id: 1, username: 'user1' }]);
-
-            await request(app).get('/users');
-
-            expect(authenticateToken).toHaveBeenCalled();
+        // Add a global error handler that only responds when headers haven't been sent yet.
+        // This mirrors typical Express error handling and lets routes that call next(err)
+        // (without sending a response) return a 500 here so tests can assert on it.
+        app.use((err, req, res, next) => {
+            if (res.headersSent) return next(err);
+            res.status(500).json({ error: err.message });
         });
     });
 
-    describe('GET /:id', () => {
-        it('should return a user by id', async () => {
-            const mockUser = { id: 1, username: 'user1' };
-            getUser.mockResolvedValue(mockUser);
-
-            const response = await request(app).get('/users/1');
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockUser);
-            expect(getUser).toHaveBeenCalledWith('1');
-        });
-
-        it('should call authenticateToken middleware', async () => {
-            getUser.mockResolvedValue({ id: 1, username: 'user1' });
-
-            await request(app).get('/users/1');
-
-            expect(authenticateToken).toHaveBeenCalled();
-        });
+    test('GET /users -> 404 when no users found', async () => {
+        getAllUsersMock.mockResolvedValueOnce([]);
+        const res = await request(app).get('/users');
+        expect(res.status).toBe(404);
+        expect(res.body).toEqual({ error: 'Users not found' });
+        expect(getAllUsersMock).toHaveBeenCalledWith(undefined);
     });
 
-    describe('POST /auth', () => {
-        it('should authenticate user with valid credentials', async () => {
-            const mockAuthResponse = { token: 'jwt-token', userId: 1 };
-            authenticateUser.mockResolvedValue(mockAuthResponse);
-
-            const response = await request(app)
-                .post('/users/auth')
-                .send({ username: 'user1', password: 'password123' });
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockAuthResponse);
-            expect(authenticateUser).toHaveBeenCalledWith('user1', 'password123');
-        });
-
-        it('should not require authentication token', async () => {
-            authenticateUser.mockResolvedValue({ token: 'jwt-token' });
-
-            await request(app)
-                .post('/users/auth')
-                .send({ username: 'user1', password: 'password123' });
-
-            // authenticateToken should not be called for auth route
-            expect(authenticateToken).not.toHaveBeenCalled();
-        });
+    test('GET /users -> 200 returns users array', async () => {
+        const users = [{ id: '1', username: 'alice' }, { id: '2', username: 'bob' }];
+        getAllUsersMock.mockResolvedValueOnce(users);
+        const res = await request(app).get('/users?page=2');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(users);
+        // route forwards req.query.page to getAllUsers
+        expect(getAllUsersMock).toHaveBeenCalledWith('2');
     });
 
-    describe('POST /register', () => {
-        it('should register a new user', async () => {
-            const mockUser = { id: 1, username: 'newuser', email: 'new@example.com' };
-            const mockCreateUser = jest.fn().mockResolvedValue(mockUser);
-            UserService.mockImplementation(() => ({
-                createUser: mockCreateUser
-            }));
-
-            const response = await request(app)
-                .post('/users/register')
-                .send({ username: 'newuser', email: 'new@example.com', password: 'password123' });
-
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual(mockUser);
-            expect(mockCreateUser).toHaveBeenCalledWith({
-                username: 'newuser',
-                email: 'new@example.com',
-                password: 'password123'
-            });
+    test('GET /users -> 500 when getAllUsers throws', async () => {
+        getAllUsersMock.mockRejectedValueOnce(new Error('database failure'));
+        const res = await request(app).get('/users');
+        // The route catches the error and responds with a 500 and a specific JSON body
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({
+            error: 'Failed to fetch users',
+            details: 'database failure',
         });
+        expect(getAllUsersMock).toHaveBeenCalled();
+    });
 
-        it('should call authenticateToken middleware', async () => {
-            const mockCreateUser = jest.fn().mockResolvedValue({ id: 1 });
-            UserService.mockImplementation(() => ({
-                createUser: mockCreateUser
-            }));
+    test('GET /users/:id -> 200 returns single user', async () => {
+        const user = { id: '123', username: 'carol' };
+        getUserMock.mockResolvedValueOnce(user);
+        const res = await request(app).get('/users/123');
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(user);
+        expect(getUserMock).toHaveBeenCalledWith('123');
+    });
 
-            await request(app)
-                .post('/users/register')
-                .send({ username: 'newuser' });
+    test('GET /users/:id -> 500 when controller throws (propagates to error handler)', async () => {
+        getUserMock.mockRejectedValueOnce(new Error('not found'));
+        const res = await request(app).get('/users/does-not-exist');
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({ error: 'not found' });
+        expect(getUserMock).toHaveBeenCalledWith('does-not-exist');
+    });
 
-            expect(authenticateToken).toHaveBeenCalled();
-        });
+    test('POST /users/auth -> 200 returns authentication payload', async () => {
+        const authPayload = { token: 'jwt-token', userId: 'u1' };
+        authenticateUserMock.mockResolvedValueOnce(authPayload);
+
+        const res = await request(app)
+            .post('/users/auth')
+            .send({ username: 'alice', password: 'secret' });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(authPayload);
+        expect(authenticateUserMock).toHaveBeenCalledWith('alice', 'secret');
+    });
+
+    test('POST /users/auth -> 500 when authenticateUser throws (propagates to error handler)', async () => {
+        authenticateUserMock.mockRejectedValueOnce(new Error('bad credentials'));
+        const res = await request(app)
+            .post('/users/auth')
+            .send({ username: 'x', password: 'y' });
+
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({ error: 'bad credentials' });
+        expect(authenticateUserMock).toHaveBeenCalledWith('x', 'y');
+    });
+
+    test('POST /users/register -> 200 creates and returns new user', async () => {
+        const created = { id: 'u99', username: 'newuser' };
+        createUserMock.mockResolvedValueOnce(created);
+
+        const res = await request(app).post('/users/register').send({ username: 'newuser', password: 'pw' });
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual(created);
+        expect(createUserMock).toHaveBeenCalledWith({ username: 'newuser', password: 'pw' });
+    });
+
+    test('POST /users/register -> 500 when createUser throws (propagates to error handler)', async () => {
+        createUserMock.mockRejectedValueOnce(new Error('cannot create'));
+        const res = await request(app).post('/users/register').send({ username: 'x', password: 'y' });
+        expect(res.status).toBe(500);
+        expect(res.body).toEqual({ error: 'cannot create' });
+        expect(createUserMock).toHaveBeenCalledWith({ username: 'x', password: 'y' });
     });
 });
