@@ -1,5 +1,5 @@
-import { execute } from '../db/query.js';
-import { STATUS } from "../config/constants.js";
+import { execute } from '#db/query.js';
+import { STATUS } from "#config/constants.js";
 
 export class MessageService {
     async createMessage(newMessage) {

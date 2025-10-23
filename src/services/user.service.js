@@ -1,6 +1,6 @@
-import { query } from '../db/query.js';
-import {generateHashedPassword} from "../utils/encrypt.js";
-import { STATUS } from "../config/constants.js";
+import { query } from '#db/query.js';
+import {generateHashedPassword} from "#utils/encrypt.js";
+import { STATUS } from "#config/constants.js";
 
 export class UserService {
     async userExists(username) {
