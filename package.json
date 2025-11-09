@@ -13,6 +13,7 @@
     "#controllers/*": "./src/controllers/*",
     "#db/*": "./src/db/*",
     "#middlewares/*": "./src/middlewares/*",
+    "#models/*": "./src/models/*",
     "#routes/*": "./src/routes/*",
     "#services/*": "./src/services/*",
     "#tests/*": "./tests/*",
@@ -34,7 +35,6 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
     "mysql2": "^3.15.2",
-    "pg": "^8.16.3",
     "sequelize": "^6.37.7",
     "sequelize-cli": "^6.6.3"
   }

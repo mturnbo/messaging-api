@@ -1,5 +1,5 @@
 /**
- * Jest tests for src/routes/users.routes.js
+ * Jest tests for src/routes/user.routes.js
  *
  * These tests mock the controller functions, token middleware, and UserService so we can
  * exercise the route handlers in isolation without hitting a real DB or verifying auth.
@@ -17,7 +17,7 @@ const authenticateUserMock = jest.fn();
 const createUserMock = jest.fn();
 
 // Mock controllers before importing the router so the router gets the mocked functions
-jest.mock('#controllers/users.controller.js', () => ({
+jest.mock('#controllers/user.controller.js', () => ({
     // export functions that forward to our jest.fn() mocks
     getAllUsers: (...args) => getAllUsersMock(...args),
     getUser: (...args) => getUserMock(...args),
@@ -37,7 +37,7 @@ jest.mock('#services/user.service.js', () => ({
 }));
 
 // Now import the router under test (after mocks are set up)
-import router from '#routes/users.routes.js';
+import router from '#routes/user.routes.js';
 
 describe('users.routes', () => {
     let app;
