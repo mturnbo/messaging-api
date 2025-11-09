@@ -4,8 +4,8 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 
 import indexRouter from './routes/index.routes.js';
-import usersRouter from './routes/users.routes.js';
-import messagesRouter from './routes/messages.routes.js';
+import usersRouter from '#routes/user.routes.js';
+import messagesRouter from '#routes/message.routes.js';
 
 import { notFound } from './middlewares/notFound.js';
 import { handleError } from './middlewares/handleError.js';

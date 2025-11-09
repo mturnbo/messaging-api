@@ -13,6 +13,7 @@
     "#controllers/*": "./src/controllers/*",
     "#db/*": "./src/db/*",
     "#middlewares/*": "./src/middlewares/*",
+    "#models/*": "./src/models/*",
     "#routes/*": "./src/routes/*",
     "#services/*": "./src/services/*",
     "#tests/*": "./tests/*",

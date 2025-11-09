@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMessage } from '#controllers/messages.controller.js';
+import { getMessage } from '#controllers/message.controller.js';
 import { MessageService } from '#services/message.service.js';
 import { authenticateToken } from '#middlewares/token.js';
 
