@@ -1,37 +1,9 @@
-import express from 'express';
-import { getMessage } from '#controllers/message.controller.js';
-import { MessageService } from '#services/message.service.js';
-import { authenticateToken } from '#middlewares/token.js';
+import { Router } from 'express';
+import MessageController from '#controllers/message.controller.js';
 
-const router = express.Router();
-const messageService = new MessageService();
+const router = Router();
 
-// GET message
-router.get('/:id', authenticateToken, async function(req, res, next) {
-    try {
-        res.json(await getMessage(req.params.id));
-    } catch (err) {
-        console.error(`Error while getting message `, err.message);
-        next(err);
-    }
-});
-
-// POST new message
-/*
-Accepts message params:
-- senderId
-- recipientId
-- subject
-- body
-- senderAddress
- */
-router.post('/post', authenticateToken, async function(req, res, next) {
-    try {
-        res.json(await messageService.createMessage(req.body));
-    } catch (err) {
-        console.error(`Error while creating message `, err.message);
-        next(err);
-    }
-});
+router.get('/:id', MessageController.getMessageById );
+router.delete('/:id', MessageController.deleteMessage);
 
 export default router;
