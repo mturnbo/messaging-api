@@ -84,7 +84,7 @@ const Message = sequelize.define('Message', {
 },
 {
   timestamps: false,
-    freezeTableName: false,
+  freezeTableName: false,
 });
 
 export default Message;
