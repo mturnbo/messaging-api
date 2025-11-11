@@ -19,8 +19,10 @@ const AuthenticationController = {
     user.lastLogin = formatDateToMySQL(new Date());
     await user.save();
 
+    console.log('SETTING JWT Token expires in: ', process.env.JWT_EXPIRATION_TIME, 'seconds')
+
     const token = jwt.sign(
-      {id: user.id, username: user.username},
+      {username: user.username},
       process.env.JWT_SECRET,
       {expiresIn: process.env.JWT_EXPIRATION_TIME}
     );

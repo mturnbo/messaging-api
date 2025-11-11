@@ -18,6 +18,7 @@ export const authMiddleware = (req, res, next) => {
     }
 
     jwt.verify(token, JWT_SECRET, (err, user) => {
+        console.log(user, token);
         if (err) {
             return res.status(403).json({
                 status: STATUS.UNAUTHORIZED,
