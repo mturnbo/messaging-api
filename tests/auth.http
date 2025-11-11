@@ -30,3 +30,13 @@ Authorization: Bearer {{auth_token}}
   "body": "Lorem ipsum dolor sit amet",
   "senderAddress": "123.123.123.123"
 }
+
+###
+POST http://localhost:3000/messages/read
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": 7,
+  "readerAddress": "10.11.12.13"
+}
