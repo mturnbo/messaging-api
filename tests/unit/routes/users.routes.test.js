@@ -25,7 +25,7 @@ jest.mock('#controllers/user.controller.js', () => ({
 }));
 
 // Mock token middleware to simply call next() by default (successful authentication)
-jest.mock('#middlewares/token.js', () => ({
+jest.mock('#middlewares/auth.middleware.js', () => ({
     authenticateToken: jest.fn((req, res, next) => next()),
 }));
 

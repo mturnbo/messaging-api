@@ -18,10 +18,18 @@ create table messaging.users
 );
 */
 
-import { DataTypes } from 'sequelize';
+import { DataTypes, Model } from "sequelize";
 import sequelize from '#config/database.js';
+import bcrypt from 'bcrypt';
 
-const User = sequelize.define('User', {
+class User extends Model {
+  checkPassword(password) {
+    return bcrypt.compare(password, this.passwordHash);
+  }
+};
+
+User.init(
+  {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
@@ -39,6 +47,9 @@ const User = sequelize.define('User', {
       allowNull: false,
       unique: true,
       field: 'email',
+    },
+    password: {
+      type: DataTypes.VIRTUAL,
     },
     passwordHash: {
       type: DataTypes.STRING,
@@ -72,8 +83,10 @@ const User = sequelize.define('User', {
     },
   },
   {
+    sequelize,
     timestamps: false,
-    freezeTableName: false,
-  });
+    modelName: 'User',
+  }
+);
 
 export default User;
