@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 
 import indexRouter from './routes/index.routes.js';
+import authRouter from './routes/auth.routes.js';
 import usersRouter from '#routes/user.routes.js';
 import messagesRouter from '#routes/message.routes.js';
 
@@ -21,11 +22,12 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/auth', authRouter);
 app.use('/users', usersRouter);
 app.use('/messages', messagesRouter);
 
 app.use(notFound);
-app.use(handleError);
+// app.use(handleError);
 
 app.listen(port, () => {
     console.log(`server running on port ${port}`);
