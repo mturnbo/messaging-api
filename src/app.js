@@ -27,7 +27,7 @@ app.use('/users', usersRouter);
 app.use('/messages', messagesRouter);
 
 app.use(notFound);
-// app.use(handleError);
+app.use(handleError);
 
 app.listen(port, () => {
     console.log(`server running on port ${port}`);

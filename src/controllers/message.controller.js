@@ -9,12 +9,7 @@ const MessageController = {
   createMessage: async (req, res) => {
     const {task, createdDate, percentCompleted, isCompleted} = req.body;
     try {
-      const newMessage = await Message.create({
-        task,
-        createdDate,
-        percentCompleted,
-        isCompleted,
-      });
+      const newMessage = await Message.create(req.body);
       res.status(201).json(newMessage);
     } catch (error) {
       res.status(500).json({error: 'Internal Server Error'});

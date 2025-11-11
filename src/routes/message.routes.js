@@ -5,6 +5,7 @@ import { authMiddleware } from "#middlewares/auth.middleware.js";
 const router = Router();
 
 router.get('/:id', authMiddleware, MessageController.getMessageById );
+router.post('/post', authMiddleware, MessageController.createMessage );
 router.delete('/:id', authMiddleware, MessageController.deleteMessage);
 
 export default router;
