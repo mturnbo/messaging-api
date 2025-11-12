@@ -73,6 +73,7 @@ User.init(
     },
     dateCreated: {
       type: DataTypes.DATE,
+      defaultValue: DataTypes.NOW,
       allowNull: false,
       field: 'created_at',
     },
@@ -88,5 +89,12 @@ User.init(
     modelName: 'User',
   }
 );
+
+User.associate = (models) => {
+  this.hasMany(models.Message, {
+    as: 'message',
+    foreignKey: { name: 'senderId', type: DataTypes.INTEGER },
+  });
+}
 
 export default User;

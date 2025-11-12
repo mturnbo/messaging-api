@@ -26,6 +26,7 @@ create table messaging.messages
 
 import { DataTypes } from 'sequelize';
 import sequelize from '#config/database.js';
+import User from "#models/user.model.js";
 
 const Message = sequelize.define('Message', {
   id: {
@@ -52,10 +53,12 @@ const Message = sequelize.define('Message', {
   },
   body: {
     type: DataTypes.TEXT,
+    allowNull: true,
   },
   sentAt: {
     type: DataTypes.DATE,
-    allowNull: true,
+    defaultValue: DataTypes.NOW,
+    allowNull: false,
     field: 'sent_at',
   },
   senderAddress: {
@@ -75,10 +78,12 @@ const Message = sequelize.define('Message', {
   },
   isDeletedBySender: {
     type: DataTypes.BOOLEAN,
+    allowNull: true,
     field: 'is_deleted_by_sender',
   },
   isDeletedByRecipient: {
     type: DataTypes.BOOLEAN,
+    allowNull: true,
     field: 'is_deleted_by_recipient',
   },
 },
@@ -86,5 +91,12 @@ const Message = sequelize.define('Message', {
   timestamps: false,
   freezeTableName: false,
 });
+
+User.associate = (models) => {
+  this.belongsTo(models.User, {
+    as: 'user',
+    foreignKey: { name: 'senderId', type: DataTypes.INTEGER },
+  });
+}
 
 export default Message;
