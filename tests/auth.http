@@ -40,3 +40,13 @@ Authorization: Bearer {{auth_token}}
   "id": 7,
   "readerAddress": "10.11.12.13"
 }
+
+###
+POST http://localhost:3000/messages/delete
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": 4,
+  "deletedBy": 10076
+}

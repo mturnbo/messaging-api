@@ -76,15 +76,15 @@ const Message = sequelize.define('Message', {
     allowNull: true,
     field: 'reader_address',
   },
-  isDeletedBySender: {
-    type: DataTypes.BOOLEAN,
+  deletedBySender: {
+    type: DataTypes.DATE,
     allowNull: true,
-    field: 'is_deleted_by_sender',
+    field: 'deleted_by_sender',
   },
-  isDeletedByRecipient: {
-    type: DataTypes.BOOLEAN,
+  deletedByRecipient: {
+    type: DataTypes.DATE,
     allowNull: true,
-    field: 'is_deleted_by_recipient',
+    field: 'deleted_by_recipient',
   },
 },
 {

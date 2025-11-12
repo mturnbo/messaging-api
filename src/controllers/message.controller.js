@@ -49,12 +49,23 @@ const MessageController = {
   },
 
   deleteMessage: async (req, res) => {
-    const id = req.params.id;
+    const id = req.body.id;
     try {
       const message = await Message.findByPk(id);
       if (message) {
-        await message.destroy();
-        res.json(message);
+        const deleteDate = formatDateToMySQL(new Date());
+        let statusMsg = '';
+        if (req.body.deletedBy === message.senderId) {
+          message.deletedBySender = deleteDate;
+          await message.save();
+          statusMsg = 'Message deleted successfully by sender';
+        }
+        if (req.body.deletedBy === message.recipientId) {
+          message.deletedByRecipient = formatDateToMySQL(new Date());
+          await message.save();
+          statusMsg = 'Message deleted successfully by recipient';
+        }
+        res.status(200).json({ status: statusMsg });
       } else {
         res.status(404).json({error: 'Message not found'});
       }

@@ -7,6 +7,6 @@ const router = Router();
 router.get('/:id', authMiddleware, MessageController.getMessageById );
 router.post('/post', authMiddleware, MessageController.createMessage );
 router.post('/read', authMiddleware, MessageController.readMessage);
-router.delete('/:id', authMiddleware, MessageController.deleteMessage);
+router.post('/delete', authMiddleware, MessageController.deleteMessage);
 
 export default router;
