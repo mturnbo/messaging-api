@@ -90,6 +90,8 @@ const Message = sequelize.define('Message', {
 {
   timestamps: false,
   freezeTableName: false,
+  modelName: 'Message',
+  tableName: 'messages',
 });
 
 User.associate = (models) => {
