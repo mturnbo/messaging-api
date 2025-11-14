@@ -12,7 +12,7 @@ const UserController = {
   getAllUsers: async (req, res) => {
     try {
       const users = await User.findAll({ attributes: defaultAttributes });
-      res.json(users);
+      res.status(200).json(users);
     } catch (error) {
       res.status(500).json({ error: error });
     }
@@ -46,7 +46,7 @@ const UserController = {
         attributes: defaultAttributes,
       });
       if (user) {
-        res.json(user);
+        res.status(200).json(user);
       } else {
         res.status(404).json({ error: 'User not found' });
       }
@@ -81,7 +81,7 @@ const UserController = {
       const user = await User.findByPk(id);
       if (user) {
         await user.destroy();
-        res.json(user);
+        res.status(200).json(user);
       } else {
         res.status(404).json({ error: 'User not found' });
       }

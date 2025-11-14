@@ -3,10 +3,6 @@ import Message from '#models/message.model.js';
 import { formatDateToMySQL } from "#utils/datetime.js";
 
 const MessageController = {
-  test: async (req, res) => {
-    res.json({message: "test"})
-  },
-
   createMessage: async (req, res) => {
     const {task, createdDate, percentCompleted, isCompleted} = req.body;
     try {
@@ -22,7 +18,7 @@ const MessageController = {
     try {
       const message = await Message.findByPk(id);
       if (message) {
-        res.json(message);
+        res.status(200).json(message);
       } else {
         res.status(404).json({error: 'Message not found'});
       }
