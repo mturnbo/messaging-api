@@ -1,5 +1,8 @@
 // User Controller
 import User from '#models/user.model.js';
+import { Op } from "sequelize";
+
+const defaultAttributes = ['id', 'username', 'email', 'firstName', 'lastName', 'deviceAddress', 'dateCreated', 'lastLogin'];
 
 const UserController = {
   test: async (req, res) => {
@@ -8,7 +11,7 @@ const UserController = {
 
   getAllUsers: async (req, res) => {
     try {
-      const users = await User.findAll();
+      const users = await User.findAll({ attributes: defaultAttributes });
       res.json(users);
     } catch (error) {
       res.status(500).json({ error: error });
@@ -33,7 +36,15 @@ const UserController = {
   getUserById: async (req, res) => {
     const id = req.params.id;
     try {
-      const user = await User.findByPk(id);
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { id: id },
+            { username: id }
+          ]
+        },
+        attributes: defaultAttributes,
+      });
       if (user) {
         res.json(user);
       } else {
