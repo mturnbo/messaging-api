@@ -11,7 +11,15 @@ const UserController = {
 
   getAllUsers: async (req, res) => {
     try {
-      const users = await User.findAll({ attributes: defaultAttributes });
+      const limit = parseInt(req.params.limit) || 10;
+      const page = parseInt(req.params.page) || 1;
+      const offset = (page - 1) * limit;
+      console.log(offset, limit);
+      const users = await User.findAll({
+        offset: offset,
+        limit: limit,
+        attributes: defaultAttributes
+      });
       res.status(200).json(users);
     } catch (error) {
       res.status(500).json({ error: error });

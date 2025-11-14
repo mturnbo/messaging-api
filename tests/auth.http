@@ -10,6 +10,10 @@ Content-Type: application/json
 > {% client.global.set("auth_token", response.body.token); %}
 
 ###
+GET http://localhost:3000/users/all/10/5
+Authorization: Bearer {{auth_token}}
+
+###
 GET http://localhost:3000/users/10001
 Authorization: Bearer {{auth_token}}
 
