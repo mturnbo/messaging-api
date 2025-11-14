@@ -47,6 +47,9 @@ User.init(
       allowNull: false,
       unique: true,
       field: 'email',
+      validate: {
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.VIRTUAL,
@@ -70,6 +73,9 @@ User.init(
       type: DataTypes.STRING,
       allowNull: true,
       field: 'device_address',
+      validate: {
+        isIP: true,
+      },
     },
     dateCreated: {
       type: DataTypes.DATE,
