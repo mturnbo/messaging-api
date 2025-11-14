@@ -1,6 +1,7 @@
 // User Controller
 import User from '#models/user.model.js';
 import { Op } from "sequelize";
+import { QUERIES } from "#config/constants.js";
 
 const defaultAttributes = ['id', 'username', 'email', 'firstName', 'lastName', 'deviceAddress', 'dateCreated', 'lastLogin'];
 
@@ -11,7 +12,7 @@ const UserController = {
 
   getAllUsers: async (req, res) => {
     try {
-      const limit = parseInt(req.params.limit) || 10;
+      const limit = parseInt(req.params.limit) || QUERIES.DEFAULT_LIMIT;
       const page = parseInt(req.params.page) || 1;
       const offset = (page - 1) * limit;
       console.log(offset, limit);
