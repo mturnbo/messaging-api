@@ -14,6 +14,10 @@ GET http://localhost:3000/users/10001
 Authorization: Bearer {{auth_token}}
 
 ###
+GET http://localhost:3000/users/testuser1
+Authorization: Bearer {{auth_token}}
+
+###
 GET http://localhost:3000/messages/2
 Authorization: Bearer {{auth_token}}
 

@@ -1,5 +1,8 @@
 // User Controller
 import User from '#models/user.model.js';
+import { Op } from "sequelize";
+
+const defaultAttributes = ['id', 'username', 'email', 'firstName', 'lastName', 'deviceAddress', 'dateCreated', 'lastLogin'];
 
 const UserController = {
   test: async (req, res) => {
@@ -8,8 +11,8 @@ const UserController = {
 
   getAllUsers: async (req, res) => {
     try {
-      const users = await User.findAll();
-      res.json(users);
+      const users = await User.findAll({ attributes: defaultAttributes });
+      res.status(200).json(users);
     } catch (error) {
       res.status(500).json({ error: error });
     }
@@ -33,9 +36,17 @@ const UserController = {
   getUserById: async (req, res) => {
     const id = req.params.id;
     try {
-      const user = await User.findByPk(id);
+      const user = await User.findOne({
+        where: {
+          [Op.or]: [
+            { id: id },
+            { username: id }
+          ]
+        },
+        attributes: defaultAttributes,
+      });
       if (user) {
-        res.json(user);
+        res.status(200).json(user);
       } else {
         res.status(404).json({ error: 'User not found' });
       }
@@ -70,7 +81,7 @@ const UserController = {
       const user = await User.findByPk(id);
       if (user) {
         await user.destroy();
-        res.json(user);
+        res.status(200).json(user);
       } else {
         res.status(404).json({ error: 'User not found' });
       }

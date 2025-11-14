@@ -65,6 +65,9 @@ const Message = sequelize.define('Message', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'sender_address',
+    validate: {
+      isIP: true,
+    },
   },
   readAt: {
     type: DataTypes.DATE,
@@ -75,6 +78,9 @@ const Message = sequelize.define('Message', {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'reader_address',
+    validate: {
+      isIP: true,
+    },
   },
   deletedBySender: {
     type: DataTypes.DATE,
