@@ -104,4 +104,11 @@ User.associate = (models) => {
   });
 }
 
+// TODO: Add beforeCreate hook to hash password
+// User.addHook("beforeSave", async (user) => {
+//   if (user.password) {
+//     user.password_hash = await bcrypt.hash(user.password, 8);
+//   }
+// });
+
 export default User;
