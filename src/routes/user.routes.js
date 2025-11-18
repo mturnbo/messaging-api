@@ -4,9 +4,16 @@ import { authMiddleware } from "#middlewares/auth.middleware.js";
 
 const router = Router();
 
+// GET all users
 router.get('/', authMiddleware, UserController.getAllUsers );
+
+// GET all users with pagination
 router.get('/:limit/:page', authMiddleware, UserController.getAllUsers );
+
+// GET user by id
 router.get('/:id', authMiddleware, UserController.getUserById );
+
+// POST Delete user
 router.delete('/delete/:id', authMiddleware, UserController.deleteUser);
 
 export default router;
