@@ -9,8 +9,8 @@ create table messaging.users
     first_name     varchar(50)                         not null,
     last_name      varchar(50)                         not null,
     device_address varchar(50)                         null,
-    date_created     timestamp default CURRENT_TIMESTAMP null,
-    last_login      timestamp                           null,
+    date_created   timestamp default CURRENT_TIMESTAMP null,
+    last_login     timestamp                           null,
     constraint email
         unique (email),
     constraint username

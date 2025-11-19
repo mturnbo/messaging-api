@@ -2,8 +2,7 @@
 /*
 create table messaging.messages
 (
-    id                      int auto_increment
-        primary key,
+    id                      int auto_increment primary key,
     sender_id               int                                  not null,
     recipient_id            int                                  not null,
     subject                 varchar(255)                         null,
