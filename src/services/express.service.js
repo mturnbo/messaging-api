@@ -4,29 +4,21 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
 
+import indexRouter from '#routes/index.routes.js';
+import authRouter from '#routes/auth.routes.js';
+import usersRouter from '#routes/user.routes.js';
+import messagesRouter from '#routes/message.routes.js';
+
 import { notFound } from '#middlewares/notFound.js';
 import { handleError } from '#middlewares/handleError.js';
 
 const __dirname = path.resolve();
-console.log(__dirname);
-
-const routeFiles = fs
-  .readdirSync(`${__dirname}/src/routes/`)
-  .filter((file) => file.endsWith('routes.js'));
 
 let server;
-let routes = [];
 
 const expressService = {
   init: async () => {
     try {
-      // Load routes automatically
-      for (const file of routeFiles) {
-        const route = await import(`${__dirname}/src/routes/${file}`);
-        const routeName = Object.keys(route)[0];
-        routes.push(route[routeName]);
-      }
-
       // config server
       server = express();
       server.use(logger('dev'));
@@ -36,7 +28,10 @@ const expressService = {
       server.use(express.static(path.join(__dirname, 'public')));
 
       // add routes
-      server.use(routes);
+      server.use('/', indexRouter);
+      server.use('/auth', authRouter);
+      server.use('/users', usersRouter);
+      server.use('/messages', messagesRouter);
 
       // error handling middleware
       server.use(notFound);
