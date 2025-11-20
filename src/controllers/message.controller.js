@@ -1,6 +1,5 @@
 // Message Controller
 import Message from '#models/message.model.js';
-import { formatDateToMySQL } from "#utils/datetime.js";
 
 const MessageController = {
   createMessage: async (req, res) => {
@@ -32,7 +31,7 @@ const MessageController = {
     try {
       const message = await Message.findByPk(id);
       if (message) {
-        message.readAt = formatDateToMySQL(new Date());
+        message.readAt = new Date().toISOString().replace(/T/, ' ').replace(/\..+/g, '')
         message.readerAddress = req.body.readerAddress;
         await message.save();
         res.status(200).json({ status: 'Message read successfully' });
@@ -49,7 +48,7 @@ const MessageController = {
     try {
       const message = await Message.findByPk(id);
       if (message) {
-        const deleteDate = formatDateToMySQL(new Date());
+        const deleteDate = new Date().toISOString().replace(/T/, ' ').replace(/\..+/g, '')
         let statusMsg = '';
         if (req.body.deletedBy === message.senderId) {
           message.deletedBySender = deleteDate;
@@ -57,7 +56,7 @@ const MessageController = {
           statusMsg = 'Message deleted successfully by sender';
         }
         if (req.body.deletedBy === message.recipientId) {
-          message.deletedByRecipient = formatDateToMySQL(new Date());
+          message.deletedByRecipient = new Date().toISOString().replace(/T/, ' ').replace(/\..+/g, '')
           await message.save();
           statusMsg = 'Message deleted successfully by recipient';
         }

@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "nodemon  --experimental-modules --es-module-specifier-resolution=node",
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest"
+    "test": "node --no-warnings --experimental-vm-modules $( [ -f ./node_modules/.bin/jest ] && echo ./node_modules/.bin/jest || which jest )",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "imports": {
     "#config/*": "./src/config/*",
@@ -24,6 +26,7 @@
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
+    "sinon": "^21.0.0",
     "supertest": "^7.1.4"
   },
   "dependencies": {
