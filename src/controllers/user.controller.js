@@ -6,16 +6,12 @@ import { QUERIES } from "#config/constants.js";
 const defaultAttributes = ['id', 'username', 'email', 'firstName', 'lastName', 'deviceAddress', 'dateCreated', 'lastLogin'];
 
 const UserController = {
-  test: async (req, res) => {
-    res.json({message: "test"})
-  },
-
   getAllUsers: async (req, res) => {
     try {
       const limit = parseInt(req.params.limit) || QUERIES.DEFAULT_LIMIT;
-      const page = parseInt(req.params.page) || 1;
+      let page = parseInt(req.params.page) || 1;
+      if (isNaN(page) || page < 1) page = 1;
       const offset = (page - 1) * limit;
-      console.log(offset, limit);
       const users = await User.findAll({
         offset: offset,
         limit: limit,
