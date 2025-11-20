@@ -1,12 +1,7 @@
-import { jest } from "@jest/globals";
+import {beforeEach, jest} from "@jest/globals";
 import sinon from 'sinon';
-import MessageController from '../../../src/controllers/message.controller';
-import Message from '../../../src/models/message.model';
-import { formatDateToMySQL } from '../../../src/utils/datetime.js';
-
-jest.mock('../../../src/utils/datetime.js', () => ({
-  formatDateToMySQL: jest.fn(() => '2024-01-01 00:00:00')
-}));
+import MessageController from '#controllers/message.controller';
+import Message from '#models/message.model';
 
 describe('MessageController', () => {
   let req, res, sandbox;
@@ -93,5 +88,134 @@ describe('MessageController', () => {
     });
   });
 
+  describe('readMessage', () => {
+    beforeEach(() => {
+      jest.useFakeTimers(); // Enable fake timers
+      jest.setSystemTime(new Date('2024-01-01T12:00:00Z'));
+    });
 
+    afterEach(() => {
+      jest.useRealTimers(); // Restore real timers after each test
+    });
+
+    it('should mark message as read successfully', async () => {
+      const mockDate = '2024-01-01 12:00:00';
+      const mockMessage = {
+        id: 1,
+        readAt: null,
+        readerAddress: null,
+        save: jest.fn().mockResolvedValue(true)
+      };
+
+      req.body = { id: 1, readerAddress: '192.168.1.1' };
+      sandbox.stub(Message, 'findByPk').resolves(mockMessage);
+
+      await MessageController.readMessage(req, res);
+
+      expect(mockMessage.readAt).toBe(mockDate);
+      expect(mockMessage.readerAddress).toBe('192.168.1.1');
+      expect(mockMessage.save).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ status: 'Message read successfully' });
+    });
+
+    it('should return 404 when message not found', async () => {
+      req.body = { id: 999, readerAddress: '192.168.1.1' };
+      sandbox.stub(Message, 'findByPk').resolves(null);
+
+      await MessageController.readMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Message not found' });
+    });
+
+    it('should handle errors when reading message', async () => {
+      req.body = { id: 1, readerAddress: '192.168.1.1' };
+      sandbox.stub(Message, 'findByPk').rejects(new Error('Database error'));
+
+      await MessageController.readMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error' });
+    });
+  });
+
+  describe('deleteMessage', () => {
+    beforeEach(() => {
+      jest.useFakeTimers(); // Enable fake timers
+      jest.setSystemTime(new Date('2024-01-01T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers(); // Restore real timers after each test
+    });
+
+    it('should delete message by sender successfully', async () => {
+      const mockDate = '2024-01-01 12:00:00';
+      const mockMessage = {
+        id: 1,
+        senderId: 100,
+        recipientId: 200,
+        deletedBySender: null,
+        deletedByRecipient: null,
+        save: jest.fn().mockResolvedValue(true)
+      };
+
+      req.body = {id: 1, deletedBy: 100};
+      sandbox.stub(Message, 'findByPk').resolves(mockMessage);
+
+      await MessageController.deleteMessage(req, res);
+
+      expect(mockMessage.deletedBySender).toBe(mockDate);
+      expect(mockMessage.save).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'Message deleted successfully by sender'
+      });
+    });
+
+    it('should delete message by recipient successfully', async () => {
+      const mockDate = '2024-01-01 12:00:00';
+      const mockMessage = {
+        id: 1,
+        senderId: 100,
+        recipientId: 200,
+        deletedBySender: null,
+        deletedByRecipient: null,
+        save: jest.fn().mockResolvedValue(true)
+      };
+
+      req.body = {id: 1, deletedBy: 200};
+      sandbox.stub(Message, 'findByPk').resolves(mockMessage);
+
+      await MessageController.deleteMessage(req, res);
+
+      expect(mockMessage.deletedByRecipient).toBe(mockDate);
+      expect(mockMessage.save).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        status: 'Message deleted successfully by recipient'
+      });
+    });
+
+    it('should return 404 when message not found', async () => {
+      req.body = {id: 999, deletedBy: 100};
+      sandbox.stub(Message, 'findByPk').resolves(null);
+
+      await MessageController.deleteMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({error: 'Message not found'});
+    });
+
+    it('should handle errors when deleting message', async () => {
+      req.body = {id: 1, deletedBy: 100};
+      sandbox.stub(Message, 'findByPk').rejects(new Error('Database error'));
+
+      await MessageController.deleteMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({error: 'Internal Server Error'});
+    });
+  });
 });
