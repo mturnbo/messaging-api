@@ -1,4 +1,4 @@
-import {beforeEach, jest} from "@jest/globals";
+import { beforeEach, jest } from "@jest/globals";
 import sinon from 'sinon';
 import MessageController from '#controllers/message.controller';
 import Message from '#models/message.model';
