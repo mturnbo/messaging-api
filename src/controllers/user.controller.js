@@ -61,22 +61,31 @@ const UserController = {
   },
 
   updateUser: async (req, res) => {
-    const id = req.params.id;
-    const { task, createdDate, percentCompleted, isCompleted } = req.body;
+    const { id, userUpdate } = req.body;
+    const updatableFields = ['username', 'password', 'email', 'firstName', 'lastName', 'deviceAddress'];
     try {
       const user = await User.findByPk(id);
       if (user) {
-        user.task = task;
-        user.createdDate = createdDate;
-        user.percentCompleted = percentCompleted;
-        user.isCompleted = isCompleted;
+        Object.keys(userUpdate).forEach(key => {
+          if (updatableFields.includes(key)) {
+            user[key] = userUpdate[key];
+          }
+        });
         await user.save();
-        res.json(user);
+        res.status(200).json({ status: 'User updated successfully', user: user });
       } else {
         res.status(404).json({ error: 'User not found' });
       }
     } catch (error) {
-      res.status(500).json({ error: 'Internal Server Error' });
+      if (error.name === 'SequelizeValidationError') {
+        const validationErrors = error.errors.map(err => (`Validation error on field ${err.path}: ${err.message}`));
+        res.status(400).json({
+          status: 'User not updated',
+          errors: validationErrors,
+        });
+      } else {
+        res.status(500).json({error: 'Internal Server Error'});
+      }
     }
   },
 

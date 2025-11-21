@@ -13,6 +13,9 @@ router.get('/:limit/:page', authMiddleware, UserController.getAllUsers );
 // GET user by id
 router.get('/:id', authMiddleware, UserController.getUserById );
 
+// POST update user
+router.post('/update/', authMiddleware, UserController.updateUser);
+
 // POST Delete user
 router.delete('/delete/:id', authMiddleware, UserController.deleteUser);
 
