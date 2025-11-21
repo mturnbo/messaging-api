@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, jest} from "@jest/globals";
+import {beforeEach, describe, expect, it, jest} from "@jest/globals";
 import sinon from 'sinon';
 import UserController from '#controllers/user.controller';
 import User from '#models/user.model';
@@ -237,5 +237,54 @@ describe('UserController', () => {
       expect(res.json).toHaveBeenCalledWith(mockUser);
     });
   });
+
+  describe('createUser', () => {
+    it('should create a new user successfully with all fields', async () => {
+      const mockUserData = {
+        task: 'Complete onboarding',
+        createdDate: '2024-01-15',
+        percentCompleted: 50,
+        isCompleted: false
+      };
+      const mockCreatedUser = { id: 1, ...mockUserData };
+
+      req.body = mockUserData;
+      sandbox.stub(User, 'create').resolves(mockCreatedUser);
+
+      await UserController.createUser(req, res);
+
+      sandbox.assert.calledWith(User.create, {
+        task: 'Complete onboarding',
+        createdDate: '2024-01-15',
+        percentCompleted: 50,
+        isCompleted: false
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith(mockCreatedUser);
+    });
+
+    it('should create user with minimal data', async () => {
+      const mockUserData = {
+        task: 'Test',
+        createdDate: undefined,
+        percentCompleted: undefined,
+        isCompleted: undefined
+      };
+      const mockCreatedUser = { id: 2, task: 'Test' };
+
+      req.body = mockUserData;
+      sandbox.stub(User, 'create').resolves(mockCreatedUser);
+
+      await UserController.createUser(req, res);
+
+      sandbox.assert.calledWith(User.create, {
+        task: 'Test',
+        createdDate: undefined,
+        percentCompleted: undefined,
+        isCompleted: undefined
+      });
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+  })
 
 });
