@@ -69,6 +69,15 @@ User.init(
       allowNull: true,
       field: 'last_name',
     },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.firstName} ${this.lastName}`;
+      },
+      set(value) {
+        throw new Error('Do not try to set the `fullName` value!');
+      },
+    },
     deviceAddress: {
       type: DataTypes.STRING,
       allowNull: true,
@@ -101,14 +110,14 @@ User.associate = (models) => {
   this.hasMany(models.Message, {
     as: 'message',
     foreignKey: { name: 'senderId', type: DataTypes.INTEGER },
+    foreignKey: { name: 'recipientId', type: DataTypes.INTEGER },
   });
 }
 
-// TODO: Add beforeCreate hook to hash password
-// User.addHook("beforeSave", async (user) => {
-//   if (user.password) {
-//     user.password_hash = await bcrypt.hash(user.password, 8);
-//   }
-// });
+User.addHook("beforeSave", async (user) => {
+  if (user.password) {
+    user.password_hash = await bcrypt.hash(user.password, 8);
+  }
+});
 
 export default User;

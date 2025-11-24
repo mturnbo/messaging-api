@@ -241,10 +241,11 @@ describe('UserController', () => {
   describe('createUser', () => {
     it('should create a new user successfully with all fields', async () => {
       const mockUserData = {
-        task: 'Complete onboarding',
-        createdDate: '2024-01-15',
-        percentCompleted: 50,
-        isCompleted: false
+        username: 'testuser',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'testuser@email.com',
+        deviceAddress: '72.45.45.99',
       };
       const mockCreatedUser = { id: 1, ...mockUserData };
 
@@ -254,37 +255,50 @@ describe('UserController', () => {
       await UserController.createUser(req, res);
 
       sandbox.assert.calledWith(User.create, {
-        task: 'Complete onboarding',
-        createdDate: '2024-01-15',
-        percentCompleted: 50,
-        isCompleted: false
+        username: 'testuser',
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'testuser@email.com',
+        deviceAddress: '72.45.45.99',
       });
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(mockCreatedUser);
     });
-
-    it('should create user with minimal data', async () => {
-      const mockUserData = {
-        task: 'Test',
-        createdDate: undefined,
-        percentCompleted: undefined,
-        isCompleted: undefined
-      };
-      const mockCreatedUser = { id: 2, task: 'Test' };
-
-      req.body = mockUserData;
-      sandbox.stub(User, 'create').resolves(mockCreatedUser);
-
-      await UserController.createUser(req, res);
-
-      sandbox.assert.calledWith(User.create, {
-        task: 'Test',
-        createdDate: undefined,
-        percentCompleted: undefined,
-        isCompleted: undefined
-      });
-      expect(res.status).toHaveBeenCalledWith(201);
-    });
   })
+
+  describe('updateUser', () => {
+    it('should update user successfully', async () => {
+      const mockUser = User.build( {
+        id: 1,
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'testuser@email.com',
+        deviceAddress: '72.45.45.99',
+      });
+
+      const saveStub = sinon.stub(mockUser, 'save').resolves(mockUser);
+
+      const updateData = {
+        lastName: 'Newlast',
+        email: 'new.email@email.com',
+        deviceAddress: '123.45.67.89',
+      };
+
+      req.body = {
+        id: 1,
+        userUpdate: updateData,
+      };
+      sandbox.stub(User, 'findOne').resolves(mockUser);
+
+      await UserController.updateUser(req, res);
+
+      sinon.assert.calledOnce(saveStub);
+      expect(mockUser.lastName).toBe(updateData.lastName);
+      expect(mockUser.email).toBe(updateData.email);
+      expect(mockUser.deviceAddress).toBe(updateData.deviceAddress);
+
+      saveStub.restore();
+    });
+  });
 
 });
