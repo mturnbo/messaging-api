@@ -10,7 +10,19 @@ Content-Type: application/json
 > {% client.global.set("auth_token", response.body.token); %}
 
 ###
+GET http://localhost:3000/users/
+Authorization: Bearer {{auth_token}}
+
+###
+GET http://localhost:3000/users/10/5
+Authorization: Bearer {{auth_token}}
+
+###
 GET http://localhost:3000/users/10001
+Authorization: Bearer {{auth_token}}
+
+###
+GET http://localhost:3000/users/testuser1
 Authorization: Bearer {{auth_token}}
 
 ###
@@ -49,4 +61,18 @@ Authorization: Bearer {{auth_token}}
 {
   "id": 4,
   "deletedBy": 10076
+}
+
+###
+POST http://localhost:3000/users/update
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "id": "99",
+  "userUpdate": {
+    "lastName": "User",
+    "email": "email.address.@email.com",
+    "deviceAddress": "74.45.45.99"
+  }
 }

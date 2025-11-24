@@ -9,8 +9,8 @@ create table messaging.users
     first_name     varchar(50)                         not null,
     last_name      varchar(50)                         not null,
     device_address varchar(50)                         null,
-    date_created     timestamp default CURRENT_TIMESTAMP null,
-    last_login      timestamp                           null,
+    date_created   timestamp default CURRENT_TIMESTAMP null,
+    last_login     timestamp                           null,
     constraint email
         unique (email),
     constraint username
@@ -47,6 +47,9 @@ User.init(
       allowNull: false,
       unique: true,
       field: 'email',
+      validate: {
+        isEmail: true,
+      },
     },
     password: {
       type: DataTypes.VIRTUAL,
@@ -66,10 +69,22 @@ User.init(
       allowNull: true,
       field: 'last_name',
     },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.firstName} ${this.lastName}`;
+      },
+      set(value) {
+        throw new Error('Do not try to set the `fullName` value!');
+      },
+    },
     deviceAddress: {
       type: DataTypes.STRING,
       allowNull: true,
       field: 'device_address',
+      validate: {
+        isIP: true,
+      },
     },
     dateCreated: {
       type: DataTypes.DATE,
@@ -95,7 +110,14 @@ User.associate = (models) => {
   this.hasMany(models.Message, {
     as: 'message',
     foreignKey: { name: 'senderId', type: DataTypes.INTEGER },
+    foreignKey: { name: 'recipientId', type: DataTypes.INTEGER },
   });
 }
+
+User.addHook("beforeSave", async (user) => {
+  if (user.password) {
+    user.password_hash = await bcrypt.hash(user.password, 8);
+  }
+});
 
 export default User;

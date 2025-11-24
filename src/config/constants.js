@@ -8,3 +8,7 @@ export const STATUS = Object.freeze({
     UNAUTHORIZED: 'unauthorized',
     NOTFOUND: 'not-found',
 });
+
+export const QUERIES = Object.freeze({
+  DEFAULT_LIMIT: 10,
+});

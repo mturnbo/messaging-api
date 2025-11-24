@@ -45,5 +45,8 @@ export const handleError = (error, req, res, next) => {
     }
     return res
         .status(500)
-        .json({ message: "Something went wrong, please try again!" });
+        .json({
+          status: "Something went wrong, please try again!",
+          error: error.message,
+        });
 };

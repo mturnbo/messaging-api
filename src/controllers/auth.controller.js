@@ -2,7 +2,6 @@
 import User from '#models/user.model.js';
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { formatDateToMySQL } from "#utils/datetime.js";
 import { BadRequestError, UnauthorizedError } from "#utils/ApiErrors.js";
 
 dotenv.config();
@@ -16,7 +15,7 @@ const AuthenticationController = {
 
     if (!(await user.checkPassword(req.body.password))) throw new UnauthorizedError();
 
-    user.lastLogin = formatDateToMySQL(new Date());
+    user.lastLogin = new Date().toISOString().replace(/T/, ' ').replace(/\..+/g, '')
     await user.save();
 
     console.log('SETTING JWT Token expires in: ', process.env.JWT_EXPIRATION_TIME, 'seconds')
