@@ -72,7 +72,7 @@ Authorization: Bearer {{auth_token}}
   "id": "99",
   "userUpdate": {
     "lastName": "User",
-    "email": "email.address@email.com",
-    "deviceAddress": "72.45.45.99"
+    "email": "email.address.@email.com",
+    "deviceAddress": "74.45.45.99"
   }
 }

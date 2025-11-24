@@ -69,6 +69,15 @@ User.init(
       allowNull: true,
       field: 'last_name',
     },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.firstName} ${this.lastName}`;
+      },
+      set(value) {
+        throw new Error('Do not try to set the `fullName` value!');
+      },
+    },
     deviceAddress: {
       type: DataTypes.STRING,
       allowNull: true,
