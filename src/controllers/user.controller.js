@@ -24,13 +24,14 @@ const UserController = {
   },
 
   createUser: async (req, res) => {
-    const { task, createdDate, percentCompleted, isCompleted } = req.body;
+    const { username, email, firstName, lastName, deviceAddress } = req.body;
     try {
       const newUser = await User.create({
-        task,
-        createdDate,
-        percentCompleted,
-        isCompleted,
+        username,
+        email,
+        firstName,
+        lastName,
+        deviceAddress
       });
       res.status(201).json(newUser);
     } catch (error) {
