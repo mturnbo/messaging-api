@@ -14,7 +14,6 @@ const UserService = {
 
     return !!user;
   },
-
 };
 
 export default UserService;
