@@ -40,6 +40,11 @@ User.init(
     username: {
       type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
+      validate: {
+        isAlphanumeric: true,
+        len: [8, 20]
+      },
       field: 'username',
     },
     email: {
@@ -53,6 +58,13 @@ User.init(
     },
     password: {
       type: DataTypes.VIRTUAL,
+      validate: {
+        isStrongPassword: (value) => {
+          if (value.length < 8) {
+            throw new Error('Password must be at least 8 characters long');
+          }
+        },
+      },
     },
     passwordHash: {
       type: DataTypes.STRING,

@@ -2,6 +2,7 @@
 import User from '#models/user.model.js';
 import { Op } from "sequelize";
 import { QUERIES } from "#config/constants.js";
+import UserService from "#services/user.service.js";
 
 const defaultAttributes = ['id', 'username', 'email', 'firstName', 'lastName', 'deviceAddress', 'dateCreated', 'lastLogin'];
 
@@ -26,6 +27,9 @@ const UserController = {
   createUser: async (req, res) => {
     const { username, email, firstName, lastName, deviceAddress } = req.body;
     try {
+      if (await UserService.isEmailOrUsernameTaken(email, username)) {
+        res.status(409).json({ error: 'Email or username already taken' });
+      }
       const newUser = await User.create({
         username,
         email,
