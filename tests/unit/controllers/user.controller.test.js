@@ -200,7 +200,7 @@ describe('UserController', () => {
 
       sandbox.stub(User, 'findOne').resolves(mockUser);
 
-      await UserController.getUserById(req, res);
+      await UserController.getUser(req, res);
 
       sandbox.assert.calledWith(User.findOne, {
         where: {
@@ -221,7 +221,7 @@ describe('UserController', () => {
 
       sandbox.stub(User, 'findOne').resolves(mockUser);
 
-      await UserController.getUserById(req, res);
+      await UserController.getUser(req, res);
 
       sandbox.assert.calledWith(User.findOne, {
         where: {
