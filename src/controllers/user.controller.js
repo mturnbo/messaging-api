@@ -39,14 +39,16 @@ const UserController = {
     }
   },
 
-  getUserById: async (req, res) => {
+  // Get user by id, username or email
+  getUser: async (req, res) => {
     const id = req.params.id;
     try {
       const user = await User.findOne({
         where: {
           [Op.or]: [
             { id: id },
-            { username: id }
+            { username: id },
+            { email: id},
           ]
         },
         attributes: defaultAttributes,
