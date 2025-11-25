@@ -1,5 +1,5 @@
 import express from 'express';
-import fs from 'fs';
+import cors from 'cors';
 import path from 'path';
 import cookieParser from 'cookie-parser';
 import logger from 'morgan';
@@ -11,17 +11,27 @@ import messagesRouter from '#routes/message.routes.js';
 
 import { notFound } from '#middlewares/notFound.js';
 import { handleError } from '#middlewares/handleError.js';
+import fs from "fs";
 
 const __dirname = path.resolve();
 
 let server;
+
+const corsOptions = {
+  origin: '*',
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
+};
+
+const accessLogStream = fs.createWriteStream(path.join(__dirname, 'logs', 'access.log'), { flags: 'a' })
 
 const expressService = {
   init: async () => {
     try {
       // config server
       server = express();
-      server.use(logger('dev'));
+      server.use(logger('combined', { stream: accessLogStream }));
       server.use(express.json());
       server.use(express.urlencoded({ extended: false }));
       server.use(cookieParser());
@@ -36,6 +46,9 @@ const expressService = {
       // error handling middleware
       server.use(notFound);
       server.use(handleError);
+
+      // add CORS
+      server.use(cors(corsOptions));
 
       // start server
       server.listen(process.env.SERVER_PORT || 3000);
