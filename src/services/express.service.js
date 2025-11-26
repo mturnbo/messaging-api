@@ -11,16 +11,16 @@ import messagesRouter from '#routes/message.routes.js';
 
 import { notFound } from '#middlewares/notFound.js';
 import { handleError } from '#middlewares/handleError.js';
-import fs from "fs";
+import fs from 'fs';
 
 const __dirname = path.resolve();
 
 let server;
 
 const corsOptions = {
-  origin: '*',
+  origin: 'http://localhost:5173',
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  preflightContinue: false,
+  preflightContinue: true,
   optionsSuccessStatus: 204,
 };
 
@@ -37,6 +37,9 @@ const expressService = {
       server.use(cookieParser());
       server.use(express.static(path.join(__dirname, 'public')));
 
+      // add CORS
+      server.use(cors(corsOptions));
+
       // add routes
       server.use('/', indexRouter);
       server.use('/auth', authRouter);
@@ -46,9 +49,6 @@ const expressService = {
       // error handling middleware
       server.use(notFound);
       server.use(handleError);
-
-      // add CORS
-      server.use(cors(corsOptions));
 
       // start server
       server.listen(process.env.SERVER_PORT || 3000);
