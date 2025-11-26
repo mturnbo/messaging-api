@@ -18,7 +18,7 @@ const __dirname = path.resolve();
 let server;
 
 const corsOptions = {
-  origin: 'http://localhost:5173',
+  origin: '*',
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   preflightContinue: true,
   optionsSuccessStatus: 204,
