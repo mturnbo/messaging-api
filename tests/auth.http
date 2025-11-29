@@ -34,17 +34,38 @@ GET http://localhost:3000/messages/2
 Authorization: Bearer {{auth_token}}
 
 ###
+GET https://baconipsum.com/api/?type=all-meat&paras=2&start-with-lorem=1
+
+> {% client.global.set("lipsum", response.body[0]); %}
+
+
+###
 POST http://localhost:3000/messages/post
 Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "senderId": 10040,
-  "recipientId": 10031,
-  "subject": "Lorem ipsum",
-  "body": "Lorem ipsum dolor sit amet",
-  "senderAddress": "123.123.123.123"
+  "senderId": 99,
+  "recipientId": 100,
+  "subject": "TEST 1",
+  "body": "{{lipsum}}",
+  "senderAddress": "12.34.56.78"
 }
+
+###
+POST http://localhost:3000/messages/post
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "senderId": 100,
+  "recipientId": 99,
+  "subject": "TEST 2",
+  "body": "{{lipsum}}",
+  "senderAddress": "98.76.54.32"
+}
+
+> {% client.global.set("newmsgid", response.body.id); %}
 
 ###
 POST http://localhost:3000/messages/read
@@ -52,7 +73,7 @@ Content-Type: application/json
 Authorization: Bearer {{auth_token}}
 
 {
-  "id": 11,
+  "id": {{newmsgid}},
   "readerAddress": "10.11.12.13"
 }
 

@@ -66,3 +66,13 @@ create table messaging.threads
     constraint threads_msg_fk
         foreign key (origin_msg) references messaging.messages (id)
 );
+
+
+create table messaging.thread_messages
+(
+    thread_id int not null,
+    msg_id    int not null,
+    reply_to  int not null,
+    primary key (thread_id, msg_id, reply_to)
+);
+

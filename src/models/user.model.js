@@ -1,22 +1,4 @@
-// models/User.js
-/*
-create table messaging.users
-(
-    id             int auto_increment primary key,
-    username       varchar(50)                         not null,
-    email          varchar(100)                        not null,
-    password_hash  varchar(255)                        not null,
-    first_name     varchar(50)                         not null,
-    last_name      varchar(50)                         not null,
-    device_address varchar(50)                         null,
-    date_created   timestamp default CURRENT_TIMESTAMP null,
-    last_login     timestamp                           null,
-    constraint email
-        unique (email),
-    constraint username
-        unique (username)
-);
-*/
+// User Model
 
 import { DataTypes, Model } from "sequelize";
 import sequelize from '#config/database.js';

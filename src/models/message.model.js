@@ -1,28 +1,4 @@
 // Message Model
-/*
-create table messaging.messages
-(
-    id                      int auto_increment primary key,
-    sender_id               int                                  not null,
-    recipient_id            int                                  not null,
-    subject                 varchar(255)                         null,
-    body                    text                                 not null,
-    sent_at                 timestamp  default CURRENT_TIMESTAMP null,
-    sender_address          varchar(20)                          null,
-    read_at                 timestamp                            null,
-    reader_address          varchar(20)                          null,
-    is_deleted_by_sender    tinyint(1) default 0                 null,
-    is_deleted_by_recipient tinyint(1) default 0                 null,
-    constraint messages_ibfk_1
-        foreign key (sender_id) references messaging.users (id)
-            on delete cascade,
-    constraint messages_ibfk_2
-        foreign key (recipient_id) references messaging.users (id)
-            on delete cascade
-);
-*/
-
-
 import {DataTypes, Model} from 'sequelize';
 import sequelize from '#config/database.js';
 
@@ -180,6 +156,10 @@ Message.associate = (models) => {
     as: 'user',
     foreignKey: { name: 'senderId', type: DataTypes.INTEGER },
     foreignKey: { name: 'recipientId', type: DataTypes.INTEGER },
+  });
+  this.hasMany(models.ThreadMessage, {
+    as: 'threadMessage',
+    foreignKey: { name: 'msgId', type: DataTypes.INTEGER },
   });
 }
 
