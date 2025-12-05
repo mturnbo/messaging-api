@@ -36,7 +36,7 @@ Authorization: Bearer {{auth_token}}
 ###
 GET https://baconipsum.com/api/?type=all-meat&paras=2&start-with-lorem=1
 
-> {% client.global.set("lipsum", response.body[0]); %}
+> {% client.global.set("lipsum", response.body); %}
 
 
 ###
@@ -51,6 +51,8 @@ Authorization: Bearer {{auth_token}}
   "body": "{{lipsum}}",
   "senderAddress": "12.34.56.78"
 }
+
+> {% client.global.set("newmsgid", response.body.id); %}
 
 ###
 POST http://localhost:3000/messages/post
