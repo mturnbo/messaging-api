@@ -102,3 +102,17 @@ Authorization: Bearer {{auth_token}}
     "deviceAddress": "74.45.45.99"
   }
 }
+
+###
+POST http://localhost:3000/messages/reply
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "replyToId": 59,
+  "senderId": 100,
+  "recipientId": 99,
+  "subject": "REPLY TO 59",
+  "body": "{{lipsum}}",
+  "senderAddress": "198.176.154.132"
+}

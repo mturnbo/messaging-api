@@ -2,6 +2,9 @@ import { beforeEach, jest } from "@jest/globals";
 import sinon from 'sinon';
 import MessageController from '#controllers/message.controller';
 import Message from '#models/message.model';
+import Thread from '#models/thread.model';
+import ThreadMessage from '#models/thread-messages.model';
+import sequelize from '#config/database.js';
 
 describe('MessageController', () => {
   let req, res, sandbox;
@@ -85,6 +88,165 @@ describe('MessageController', () => {
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error' });
+    });
+  });
+
+  describe('replyToMessage', () => {
+    it('should create a reply and a new thread for a top-level message', async () => {
+      const parentMessage = { id: 10 };
+      const replyRecord = {
+        id: 11,
+        senderId: 2,
+        recipientId: 1,
+        subject: 'Re: hello',
+        body: 'reply body',
+        toJSON: jest.fn().mockReturnValue({
+          id: 11,
+          senderId: 2,
+          recipientId: 1,
+          subject: 'Re: hello',
+          body: 'reply body'
+        })
+      };
+      const createdThread = { id: 22 };
+
+      req.body = {
+        replyToId: 10,
+        senderId: 2,
+        recipientId: 1,
+        subject: 'Re: hello',
+        body: 'reply body'
+      };
+
+      sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
+      sandbox.stub(Message, 'findByPk').resolves(parentMessage);
+      sandbox.stub(Thread, 'findOne').resolves(null);
+      sandbox.stub(ThreadMessage, 'findOne').resolves(null);
+      sandbox.stub(Thread, 'create').resolves(createdThread);
+      sandbox.stub(Message, 'create').resolves(replyRecord);
+      const threadMessageCreate = sandbox.stub(ThreadMessage, 'create').resolves({});
+
+      await MessageController.replyToMessage(req, res);
+
+      sandbox.assert.calledWith(Thread.create, { originMsg: 10 }, { transaction: {} });
+      sandbox.assert.calledWith(
+        threadMessageCreate,
+        { threadId: 22, msgId: 11, replyTo: 10 },
+        { transaction: {} }
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 11,
+        senderId: 2,
+        recipientId: 1,
+        subject: 'Re: hello',
+        body: 'reply body',
+        threadId: 22,
+        replyTo: 10
+      });
+    });
+
+    it('should attach a reply to an existing thread', async () => {
+      const parentMessage = { id: 14 };
+      const existingThread = { id: 30, originMsg: 10 };
+      const replyRecord = {
+        id: 15,
+        toJSON: jest.fn().mockReturnValue({ id: 15, body: 'nested reply' })
+      };
+
+      req.body = {
+        replyToId: 14,
+        senderId: 2,
+        recipientId: 1,
+        body: 'nested reply'
+      };
+
+      sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
+      sandbox.stub(Message, 'findByPk').onFirstCall().resolves(parentMessage);
+      sandbox.stub(Thread, 'findOne').resolves(null);
+      sandbox.stub(ThreadMessage, 'findOne').resolves({ threadId: 30, msgId: 14, replyTo: 10 });
+      sandbox.stub(Thread, 'findByPk').resolves(existingThread);
+      sandbox.stub(Thread, 'create').resolves({ id: 999 });
+      sandbox.stub(Message, 'create').resolves(replyRecord);
+      const threadMessageCreate = sandbox.stub(ThreadMessage, 'create').resolves({});
+
+      await MessageController.replyToMessage(req, res);
+
+      expect(Thread.create.called).toBe(false);
+      sandbox.assert.calledWith(
+        threadMessageCreate,
+        { threadId: 30, msgId: 15, replyTo: 14 },
+        { transaction: {} }
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+      expect(res.json).toHaveBeenCalledWith({ id: 15, body: 'nested reply', threadId: 30, replyTo: 14 });
+    });
+
+    it('should return 404 when replying to a missing message', async () => {
+      req.body = { replyToId: 999, body: 'reply body' };
+
+      sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
+      sandbox.stub(Message, 'findByPk').resolves(null);
+
+      await MessageController.replyToMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({ error: 'Message not found' });
+    });
+  });
+
+  describe('getThreadByMessageId', () => {
+    it('should return a full thread for a message in a thread', async () => {
+      req.params.id = '14';
+
+      const topMessage = {
+        id: 10,
+        body: 'hello',
+        sentAt: '2024-01-01T10:00:00.000Z',
+        toJSON: jest.fn().mockReturnValue({ id: 10, body: 'hello', sentAt: '2024-01-01T10:00:00.000Z' })
+      };
+      const replyMessage = {
+        id: 14,
+        body: 'reply',
+        sentAt: '2024-01-01T10:05:00.000Z',
+        toJSON: jest.fn().mockReturnValue({ id: 14, body: 'reply', sentAt: '2024-01-01T10:05:00.000Z' })
+      };
+
+      sandbox.stub(Message, 'findByPk').onFirstCall().resolves(replyMessage);
+      sandbox.stub(Thread, 'findOne').resolves(null);
+      sandbox.stub(ThreadMessage, 'findOne').resolves({ threadId: 30, msgId: 14, replyTo: 10 });
+      sandbox.stub(Thread, 'findByPk').resolves({ id: 30, originMsg: 10, dateCreated: '2024-01-01T10:00:00.000Z' });
+      sandbox.stub(ThreadMessage, 'findAll').resolves([{ threadId: 30, msgId: 14, replyTo: 10 }]);
+      sandbox.stub(Message, 'findAll').resolves([topMessage, replyMessage]);
+
+      await MessageController.getThreadByMessageId(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        thread: {
+          id: 30,
+          originMsg: 10,
+          dateCreated: '2024-01-01T10:00:00.000Z'
+        },
+        messages: [
+          { id: 10, body: 'hello', sentAt: '2024-01-01T10:00:00.000Z', replyTo: null },
+          { id: 14, body: 'reply', sentAt: '2024-01-01T10:05:00.000Z', replyTo: 10 }
+        ]
+      });
+    });
+
+    it('should return the single message when no thread exists', async () => {
+      req.params.id = '10';
+      const message = { id: 10, body: 'hello' };
+
+      sandbox.stub(Message, 'findByPk').resolves(message);
+      sandbox.stub(Thread, 'findOne').resolves(null);
+      sandbox.stub(ThreadMessage, 'findOne').resolves(null);
+
+      await MessageController.getThreadByMessageId(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ thread: null, messages: [message] });
     });
   });
 
