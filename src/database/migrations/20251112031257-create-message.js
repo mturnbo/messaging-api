@@ -26,6 +26,12 @@ module.exports = {
         allowNull: true,
         field: 'subject',
       },
+      clientMessageId: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+        unique: true,
+        field: 'client_message_id',
+      },
       body: {
         type: DataTypes.TEXT,
       },

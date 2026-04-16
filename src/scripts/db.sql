@@ -29,6 +29,7 @@ create table messaging.messages
     sender_id            int                                 not null,
     recipient_id         int                                 not null,
     subject              varchar(255)                        null,
+    client_message_id    varchar(255)                        null,
     body                 text                                not null,
     sent_at              timestamp default CURRENT_TIMESTAMP null,
     sender_address       varchar(20)                         null,
@@ -43,6 +44,9 @@ create table messaging.messages
         foreign key (recipient_id) references messaging.users (id)
             on delete cascade
 );
+
+create unique index uq_client_message_id
+    on messaging.messages (client_message_id);
 
 create index idx_read_status
     on messaging.messages (recipient_id, read_at);
@@ -75,4 +79,3 @@ create table messaging.thread_messages
     reply_to  int not null,
     primary key (thread_id, msg_id, reply_to)
 );
-

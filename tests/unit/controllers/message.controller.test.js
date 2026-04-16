@@ -13,7 +13,8 @@ describe('MessageController', () => {
     sandbox = sinon.createSandbox();
     req = {
       body: {},
-      params: {}
+      params: {},
+      get: jest.fn().mockReturnValue(undefined)
     };
     res = {
       status: jest.fn().mockReturnThis(),
@@ -29,30 +30,96 @@ describe('MessageController', () => {
   describe('createMessage', () => {
     it('should create a new message successfully', async () => {
       const mockMessageData = {
-        task: 'Test task',
-        createdDate: '2024-01-01',
-        percentCompleted: 50,
-        isCompleted: false
+        senderId: 1,
+        recipientId: 2,
+        subject: 'Hello',
+        body: 'Test body'
       };
-      const mockCreatedMessage = {id: 1, ...mockMessageData};
+      const mockCreatedMessage = {
+        id: 1,
+        ...mockMessageData,
+        toJSON: jest.fn().mockReturnValue({ id: 1, clientMessageId: 'message-key-1', ...mockMessageData })
+      };
 
       req.body = mockMessageData;
+      req.get = jest.fn().mockReturnValue('message-key-1');
       sandbox.stub(Message, 'create').resolves(mockCreatedMessage);
 
       await MessageController.createMessage(req, res);
 
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith(mockCreatedMessage);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 1,
+        senderId: 1,
+        recipientId: 2,
+        clientMessageId: 'message-key-1',
+        subject: 'Hello',
+        body: 'Test body',
+        replyTo: null,
+        threadId: null,
+        idempotencyReplayed: false
+      });
     });
 
     it('should handle errors when creating message fails', async () => {
-      req.body = { task: 'Test' };
+      req.body = {
+        senderId: 1,
+        recipientId: 2,
+        body: 'Test'
+      };
+      req.get = jest.fn().mockReturnValue('message-key-2');
       sandbox.stub(Message, 'create').rejects(new Error('Database error'));
 
       await MessageController.createMessage(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({ error: 'Internal Server Error' });
+    });
+
+    it('should replay an existing message for a duplicate idempotency key', async () => {
+      req.body = {
+        senderId: 1,
+        recipientId: 2,
+        subject: 'Hello',
+        body: 'Test body'
+      };
+      req.get = jest.fn().mockReturnValue('message-key-3');
+
+      const duplicateError = new Error('duplicate');
+      duplicateError.name = 'SequelizeUniqueConstraintError';
+
+      sandbox.stub(Message, 'create').rejects(duplicateError);
+      sandbox.stub(Message, 'findOne').resolves({
+        id: 44,
+        clientMessageId: 'message-key-3',
+        senderId: 1,
+        recipientId: 2,
+        subject: 'Hello',
+        body: 'Test body',
+        toJSON: jest.fn().mockReturnValue({
+          id: 44,
+          clientMessageId: 'message-key-3',
+          senderId: 1,
+          recipientId: 2,
+          subject: 'Hello',
+          body: 'Test body'
+        })
+      });
+
+      await MessageController.createMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 44,
+        senderId: 1,
+        recipientId: 2,
+        subject: 'Hello',
+        body: 'Test body',
+        clientMessageId: 'message-key-3',
+        threadId: null,
+        replyTo: null,
+        idempotencyReplayed: true
+      });
     });
   });
 
@@ -102,6 +169,7 @@ describe('MessageController', () => {
         body: 'reply body',
         toJSON: jest.fn().mockReturnValue({
           id: 11,
+          clientMessageId: 'reply-key-1',
           senderId: 2,
           recipientId: 1,
           subject: 'Re: hello',
@@ -117,6 +185,7 @@ describe('MessageController', () => {
         subject: 'Re: hello',
         body: 'reply body'
       };
+      req.get = jest.fn().mockReturnValue('reply-key-1');
 
       sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
       sandbox.stub(Message, 'findByPk').resolves(parentMessage);
@@ -137,12 +206,14 @@ describe('MessageController', () => {
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
         id: 11,
+        clientMessageId: 'reply-key-1',
         senderId: 2,
         recipientId: 1,
         subject: 'Re: hello',
         body: 'reply body',
         threadId: 22,
-        replyTo: 10
+        replyTo: 10,
+        idempotencyReplayed: false
       });
     });
 
@@ -151,7 +222,7 @@ describe('MessageController', () => {
       const existingThread = { id: 30, originMsg: 10 };
       const replyRecord = {
         id: 15,
-        toJSON: jest.fn().mockReturnValue({ id: 15, body: 'nested reply' })
+        toJSON: jest.fn().mockReturnValue({ id: 15, clientMessageId: 'reply-key-2', body: 'nested reply' })
       };
 
       req.body = {
@@ -160,6 +231,7 @@ describe('MessageController', () => {
         recipientId: 1,
         body: 'nested reply'
       };
+      req.get = jest.fn().mockReturnValue('reply-key-2');
 
       sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
       sandbox.stub(Message, 'findByPk').onFirstCall().resolves(parentMessage);
@@ -179,11 +251,19 @@ describe('MessageController', () => {
         { transaction: {} }
       );
       expect(res.status).toHaveBeenCalledWith(201);
-      expect(res.json).toHaveBeenCalledWith({ id: 15, body: 'nested reply', threadId: 30, replyTo: 14 });
+      expect(res.json).toHaveBeenCalledWith({
+        id: 15,
+        clientMessageId: 'reply-key-2',
+        body: 'nested reply',
+        threadId: 30,
+        replyTo: 14,
+        idempotencyReplayed: false
+      });
     });
 
     it('should return 404 when replying to a missing message', async () => {
       req.body = { replyToId: 999, body: 'reply body' };
+      req.get = jest.fn().mockReturnValue('reply-key-3');
 
       sandbox.stub(sequelize, 'transaction').callsFake(async (callback) => callback({}));
       sandbox.stub(Message, 'findByPk').resolves(null);
@@ -192,6 +272,54 @@ describe('MessageController', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({ error: 'Message not found' });
+    });
+
+    it('should replay the original reply for a duplicate idempotency key', async () => {
+      req.body = {
+        replyToId: 10,
+        senderId: 2,
+        recipientId: 1,
+        body: 'reply body'
+      };
+      req.get = jest.fn().mockReturnValue('reply-key-4');
+
+      const duplicateError = new Error('duplicate');
+      duplicateError.name = 'SequelizeUniqueConstraintError';
+
+      sandbox.stub(sequelize, 'transaction').rejects(duplicateError);
+      sandbox.stub(Message, 'findOne').resolves({
+        id: 55,
+        clientMessageId: 'reply-key-4',
+        senderId: 2,
+        recipientId: 1,
+        body: 'reply body',
+        toJSON: jest.fn().mockReturnValue({
+          id: 55,
+          clientMessageId: 'reply-key-4',
+          senderId: 2,
+          recipientId: 1,
+          body: 'reply body'
+        })
+      });
+      sandbox.stub(Thread, 'findOne').resolves(null);
+      sandbox.stub(ThreadMessage, 'findOne')
+        .onFirstCall().resolves({ threadId: 30, msgId: 55, replyTo: 10 })
+        .onSecondCall().resolves({ threadId: 30, msgId: 55, replyTo: 10 });
+      sandbox.stub(Thread, 'findByPk').resolves({ id: 30, originMsg: 10 });
+
+      await MessageController.replyToMessage(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        id: 55,
+        clientMessageId: 'reply-key-4',
+        senderId: 2,
+        recipientId: 1,
+        body: 'reply body',
+        threadId: 30,
+        replyTo: 10,
+        idempotencyReplayed: true
+      });
     });
   });
 

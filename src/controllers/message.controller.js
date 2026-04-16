@@ -1,4 +1,5 @@
 // Message Controller
+import { createHash } from 'node:crypto';
 import { Op } from 'sequelize';
 
 import { QUERIES } from '#config/constants.js';
@@ -8,6 +9,61 @@ import Thread from '#models/thread.model.js';
 import ThreadMessage from '#models/thread-messages.model.js';
 
 const formatTimestamp = () => new Date().toISOString().replace(/T/, ' ').replace(/\..+/g, '');
+const AUTO_IDEMPOTENCY_WINDOW_MS = 30 * 1000;
+
+const buildMessageRequestHash = (payload, replyToId = null) => createHash('sha256')
+  .update(
+    JSON.stringify({
+      replyToId,
+      senderId: payload.senderId,
+      recipientId: payload.recipientId,
+      subject: payload.subject ?? null,
+      body: payload.body ?? null,
+      senderAddress: payload.senderAddress ?? null,
+    })
+  )
+  .digest('hex');
+
+const buildIdempotencyKey = (req, requestHash) => {
+  const explicitKey = req.get('Idempotency-Key') || req.body.idempotencyKey;
+  if (explicitKey) {
+    return { key: explicitKey, explicit: true };
+  }
+
+  const bucket = Math.floor(Date.now() / AUTO_IDEMPOTENCY_WINDOW_MS);
+  return { key: `auto:${requestHash}:${bucket}`, explicit: false };
+};
+
+const buildMessageResponse = (message, threadId = null, replyTo = null, replayed = false) => {
+  return {
+    ...message.toJSON(),
+    threadId,
+    replyTo,
+    idempotencyReplayed: replayed,
+  };
+};
+
+const resolveClientMessageId = (req, payload, replyToId = null) => {
+  const explicitKey = req.get('Idempotency-Key') || payload.clientMessageId;
+  if (explicitKey) {
+    return explicitKey;
+  }
+
+  const requestHash = buildMessageRequestHash(payload, replyToId);
+  const { key } = buildIdempotencyKey(req, requestHash);
+  return key;
+};
+
+const isClientMessageIdConflict = (error) => {
+  if (error?.name !== 'SequelizeUniqueConstraintError') {
+    return false;
+  }
+
+  const fields = error.fields ? Object.keys(error.fields) : [];
+  return fields.length === 0
+    || fields.includes('client_message_id')
+    || fields.includes('clientMessageId');
+};
 
 const findThreadForMessage = async (messageId, transaction) => {
   const originThread = await Thread.findOne({
@@ -30,6 +86,27 @@ const findThreadForMessage = async (messageId, transaction) => {
 
   return Thread.findByPk(threadMessage.threadId, { transaction });
 };
+
+const getReplyMetadata = async (messageId) => {
+  const thread = await findThreadForMessage(messageId);
+  const threadMessage = await ThreadMessage.findOne({
+    where: { msgId: messageId },
+  });
+
+  return {
+    threadId: thread?.id ?? null,
+    replyTo: threadMessage?.replyTo ?? null,
+  };
+};
+
+const isSameMessageRequest = (message, payload, replyTo = null) => (
+  message.senderId === payload.senderId
+  && message.recipientId === payload.recipientId
+  && (message.subject ?? null) === (payload.subject ?? null)
+  && (message.body ?? null) === (payload.body ?? null)
+  && (message.senderAddress ?? null) === (payload.senderAddress ?? null)
+  && replyTo === (payload.replyToId ?? null)
+);
 
 const MessageController = {
 
@@ -86,11 +163,37 @@ const MessageController = {
   },
 
   createMessage: async (req, res) => {
+    const clientMessageId = resolveClientMessageId(req, req.body);
+    const messagePayload = {
+      ...req.body,
+      clientMessageId,
+    };
+
     try {
-      const newMessage = await Message.create(req.body);
-      return res.status(201).json(newMessage);
+      const newMessage = await Message.create(messagePayload);
+      return res.status(201).json(buildMessageResponse(newMessage, null, null, false));
     } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+      if (!isClientMessageIdConflict(error)) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      try {
+        const existingMessage = await Message.findOne({
+          where: { clientMessageId },
+        });
+
+        if (!existingMessage) {
+          return res.status(409).json({ error: 'Message request already processed but response could not be reconstructed' });
+        }
+
+        if (!isSameMessageRequest(existingMessage, req.body)) {
+          return res.status(409).json({ error: 'clientMessageId reuse with different payload is not allowed' });
+        }
+
+        return res.status(200).json(buildMessageResponse(existingMessage, null, null, true));
+      } catch (lookupError) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
     }
   },
 
@@ -100,6 +203,8 @@ const MessageController = {
     if (!replyToId || isNaN(replyToId)) {
       return res.status(400).json({ error: 'replyToId is required' });
     }
+
+    const clientMessageId = resolveClientMessageId(req, req.body, replyToId);
 
     try {
       const result = await sequelize.transaction(async (transaction) => {
@@ -116,6 +221,7 @@ const MessageController = {
 
         const replyPayload = { ...req.body };
         delete replyPayload.replyToId;
+        replyPayload.clientMessageId = clientMessageId;
 
         const replyMessage = await Message.create(replyPayload, { transaction });
 
@@ -130,17 +236,36 @@ const MessageController = {
 
         return {
           status: 201,
-          payload: {
-            ...replyMessage.toJSON(),
-            threadId: thread.id,
-            replyTo: replyToId,
-          },
+          payload: buildMessageResponse(replyMessage, thread.id, replyToId, false),
         };
       });
 
       return res.status(result.status).json(result.payload);
     } catch (error) {
-      return res.status(500).json({ error: 'Internal Server Error' });
+      if (!isClientMessageIdConflict(error)) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      try {
+        const existingMessage = await Message.findOne({
+          where: { clientMessageId },
+        });
+
+        if (!existingMessage) {
+          return res.status(409).json({ error: 'Message request already processed but response could not be reconstructed' });
+        }
+
+        const metadata = await getReplyMetadata(existingMessage.id);
+        if (!isSameMessageRequest(existingMessage, req.body, metadata.replyTo)) {
+          return res.status(409).json({ error: 'clientMessageId reuse with different payload is not allowed' });
+        }
+
+        return res.status(200).json(
+          buildMessageResponse(existingMessage, metadata.threadId, metadata.replyTo, true)
+        );
+      } catch (lookupError) {
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
     }
   },
 
