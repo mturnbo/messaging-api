@@ -48,7 +48,7 @@ Authorization: Bearer {{auth_token}}
   "senderId": 99,
   "recipientId": 100,
   "subject": "TEST 1",
-  "body": "{{lipsum[0]}}",
+  "body": "{{lipsum}}",
   "senderAddress": "12.34.56.78"
 }
 

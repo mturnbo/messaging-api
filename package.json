@@ -7,6 +7,8 @@
   "scripts": {
     "start": "node src/app.js  --experimental-modules --es-module-specifier-resolution=node",
     "dev": "nodemon  --experimental-modules --es-module-specifier-resolution=node",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:status": "sequelize-cli db:migrate:status",
     "test": "node --no-warnings --experimental-vm-modules $( [ -f ./node_modules/.bin/jest ] && echo ./node_modules/.bin/jest || which jest )",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
