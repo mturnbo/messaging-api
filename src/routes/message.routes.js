@@ -12,11 +12,17 @@ router.get('/inbox', authMiddleware, MessageController.getInbox);
 // Query params: senderId, page, limit
 router.get('/sent', authMiddleware, MessageController.getSent);
 
+// GET thread for a message
+router.get('/:id/thread', authMiddleware, MessageController.getThreadByMessageId);
+
 // GET message by id
 router.get('/:id', authMiddleware, MessageController.getMessageById );
 
 // POST new message
 router.post('/post', authMiddleware, MessageController.createMessage );
+
+// POST reply to a message
+router.post('/reply', authMiddleware, MessageController.replyToMessage);
 
 // POST update message read status
 router.post('/read', authMiddleware, MessageController.readMessage);

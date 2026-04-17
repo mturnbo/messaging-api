@@ -34,7 +34,7 @@ GET http://localhost:3000/messages/2
 Authorization: Bearer {{auth_token}}
 
 ###
-GET https://baconipsum.com/api/?type=all-meat&paras=2&start-with-lorem=1
+GET https://baconipsum.com/api/?type=all-meat&paras=3&start-with-lorem=1
 
 > {% client.global.set("lipsum", response.body); %}
 
@@ -102,3 +102,38 @@ Authorization: Bearer {{auth_token}}
     "deviceAddress": "74.45.45.99"
   }
 }
+
+###
+POST http://localhost:3000/messages/reply
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "clientMessageId": "reply-75-a",
+  "replyToId": 75,
+  "senderId": 100,
+  "recipientId": 99,
+  "subject": "REPLY TO 75",
+  "body": "{{lipsum}}",
+  "senderAddress": "198.176.154.132"
+}
+
+> {% client.global.set("newmsgid", response.body.id); %}
+
+
+###
+POST http://localhost:3000/messages/reply
+Content-Type: application/json
+Authorization: Bearer {{auth_token}}
+
+{
+  "clientMessageId": "reply-75-b",
+  "replyToId": 75,
+  "senderId": 100,
+  "recipientId": 99,
+  "subject": "REPLY TO 75",
+  "body": "reply test reply test reply test",
+  "senderAddress": "19.17.15.13"
+}
+
+> {% client.global.set("newmsgid", response.body.id); %}

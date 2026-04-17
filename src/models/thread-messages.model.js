@@ -7,11 +7,11 @@ class ThreadMessage extends Model {};
 
 ThreadMessage.init(
   {
-    id: {
+    threadId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       allowNull: false,
-      field: 'id',
+      field: 'thread_id',
     },
     msgId: {
       type: DataTypes.INTEGER,
@@ -30,15 +30,8 @@ ThreadMessage.init(
     sequelize,
     timestamps: false,
     modelName: 'ThreadMessage',
-    tableName: 'thread-messages',
+    tableName: 'thread_messages',
   }
 );
-
-ThreadMessage.associate = (models) => {
-  this.belongsTo(models.Message, {
-    as: 'message',
-    foreignKey: { name: 'msgId', type: DataTypes.INTEGER },
-  });
-}
 
 export default ThreadMessage;
