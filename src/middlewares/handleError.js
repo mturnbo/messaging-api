@@ -1,5 +1,6 @@
 import { CustomError } from './customError.js';
 import { DatabaseError } from './databaseError.js';
+import { IsApiError } from '#utils/ApiErrors.js';
 
 export const handleDatabaseError = (error, operation) => {
     console.error(`Database error during ${operation}:`, error);
@@ -40,7 +41,7 @@ export const handleDatabaseError = (error, operation) => {
 };
 
 export const handleError = (error, req, res, next) => {
-    if (error instanceof CustomError) {
+    if (error instanceof CustomError || IsApiError(error)) {
         return res.status(error.statusCode).json({ message: error.message });
     }
     return res
