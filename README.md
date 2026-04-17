@@ -1,4 +1,4 @@
-# messaging-api
+# MessageBox API (Node Express)
 Node Express API for simple user messaging system
 
 ## Features
